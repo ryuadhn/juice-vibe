@@ -1,0 +1,223 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========== CUSTOM BASE STYLES ========== */
+
+* {
+    @apply antialiased;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    @apply bg-gradient-to-br from-slate-50 via-emerald-50 to-slate-50;
+    @apply font-sans text-slate-900;
+    letter-spacing: 0.3px;
+}
+
+/* ========== CUSTOM COMPONENT UTILITIES ========== */
+
+/* Smooth button transitions */
+@layer components {
+    .btn-primary {
+        @apply px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg active:scale-95;
+        @apply bg-gradient-to-r from-emerald-600 to-emerald-500 text-white;
+    }
+
+    .btn-primary:hover {
+        @apply from-emerald-700 to-emerald-600;
+    }
+
+    .btn-secondary {
+        @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+        @apply bg-white border border-emerald-200/60 text-slate-700;
+    }
+
+    .btn-secondary:hover {
+        @apply border-emerald-400 text-emerald-600 bg-emerald-50/40;
+    }
+
+    .btn-accent {
+        @apply px-3 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg active:scale-95;
+        @apply bg-orange-500 text-white text-sm;
+    }
+
+    .btn-accent:hover {
+        @apply bg-orange-600;
+    }
+
+    /* Card styles */
+    .card-base {
+        @apply bg-white rounded-2xl border border-emerald-100/60 p-6 shadow-sm;
+    }
+
+    .card-hover {
+        @apply transition-all duration-200 hover:shadow-lg hover:border-emerald-300/60 hover:translate-y-[-2px];
+    }
+
+    /* Smooth input styles */
+    .input-primary {
+        @apply px-4 py-2.5 rounded-lg text-sm;
+        @apply border border-emerald-100/60 bg-slate-50;
+        @apply focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent;
+        @apply transition-all duration-200;
+    }
+
+    /* Badge styles */
+    .badge-emerald {
+        @apply px-2 py-1 text-xs font-medium;
+        @apply bg-emerald-100/60 text-emerald-700 rounded-full;
+        @apply border border-emerald-200/60;
+    }
+
+    .badge-orange {
+        @apply px-2 py-1 text-xs font-medium;
+        @apply bg-orange-100/60 text-orange-700 rounded-full;
+        @apply border border-orange-200/60;
+    }
+
+    /* Text utilities */
+    .text-heading-lg {
+        @apply text-3xl font-bold text-emerald-700 tracking-tight;
+    }
+
+    .text-heading-md {
+        @apply text-xl font-bold text-emerald-800;
+    }
+
+    .text-heading-sm {
+        @apply text-lg font-semibold text-slate-800;
+    }
+
+    .text-subheading {
+        @apply text-sm text-emerald-600/70 font-light;
+    }
+
+    .text-label {
+        @apply text-xs font-semibold text-slate-500 uppercase tracking-wider;
+    }
+
+    .text-description {
+        @apply text-sm text-slate-600 leading-relaxed;
+    }
+
+    /* Layout utilities */
+    .container-max {
+        @apply max-w-7xl mx-auto px-6;
+    }
+
+    .flex-center {
+        @apply flex items-center justify-center;
+    }
+
+    .grid-cols-responsive {
+        @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+    }
+}
+
+/* ========== ANIMATIONS ========== */
+
+@layer utilities {
+
+    /* Fade & slide in animation */
+    @keyframes slideInFromBottom {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-slide-in {
+        animation: slideInFromBottom 0.3s ease-out;
+    }
+
+    /* Smooth glow effect */
+    @keyframes glow {
+
+        0%,
+        100% {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+        }
+
+        50% {
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+        }
+    }
+
+    .animate-glow {
+        animation: glow 3s ease-in-out infinite;
+    }
+
+    /* Pulse effect */
+    @keyframes pulse-subtle {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.8;
+        }
+    }
+
+    .animate-pulse-subtle {
+        animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+}
+
+/* ========== SCROLLBAR STYLING ========== */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(148, 163, 184, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.4);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(16, 185, 129, 0.6);
+}
+
+/* ========== ACCESSIBILITY ========== */
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+    @apply outline-2 outline-emerald-500 outline-offset-2;
+}
+
+/* ========== PRINT STYLES ========== */
+
+@media print {
+    body {
+        @apply bg-white;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+}
