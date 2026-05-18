@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     ShoppingBag,
     Send,
@@ -28,6 +28,8 @@ import {
     QrCode,
     ChevronRight,
     Moon,
+    Brain,
+    CloudRain,
 } from "lucide-react";
 
 export default function VibeJuice() {
@@ -65,19 +67,93 @@ export default function VibeJuice() {
         { id: 2, name: "Dimas P.", rating: 5, comment: "Konsep JuiceVibe ini keren banget. AI consultant-nya benar-benar ngerti kebutuhan tubuh saya. Green Spinach-nya top!", orderType: "Takeaway", time: "5 jam lalu" },
         { id: 3, name: "Sari M.", rating: 4, comment: "Crimson Comfort-nya recommended banget buat yang lagi PMS. Rasanya enak dan efeknya kerasa. Terima kasih JuiceVibe!", orderType: "Dine-in", time: "1 hari lalu" },
     ]);
+    const [isUpsellOpen, setIsUpsellOpen] = useState(false);
+    const [upsellSuggestion, setUpsellSuggestion] = useState(null);
+    const [isLoadingUpsell, setIsLoadingUpsell] = useState(false);
+
+    // ============ VIBE ANALYTICS & HEALTH SCORE STATE ============
+    const [vibeScores, setVibeScores] = useState({
+        energy: 78,
+        calmness: 82,
+        detox: 85,
+    });
+    const [vibeHistory, setVibeHistory] = useState([
+        { date: "Senin", mood: "Lelah", score: 68 },
+        { date: "Selasa", mood: "Stres", score: 72 },
+        { date: "Rabu", mood: "Cemas", score: 78 },
+        { date: "Hari Ini", mood: "Segar", score: 81 },
+    ]);
+    const [isPrescriptionOpen, setIsPrescriptionOpen] = useState(false);
+
+    const moodScores = {
+        "Stres Tugas": { energy: 45, calmness: 35, detox: 60 },
+        "Kurang Tidur": { energy: 30, calmness: 55, detox: 50 },
+        "Bad Mood": { energy: 50, calmness: 40, detox: 70 },
+        "Butuh Energi": { energy: 40, calmness: 70, detox: 65 },
+        "Nyeri Haid": { energy: 35, calmness: 45, detox: 55 }
+    };
+
+    // ============ PERSISTENCE LOAD ============
+    useEffect(() => {
+        const cachedScores = localStorage.getItem("juicevibe_scores");
+        const cachedHistory = localStorage.getItem("juicevibe_history");
+        if (cachedScores) {
+            setVibeScores(JSON.parse(cachedScores));
+        }
+        if (cachedHistory) {
+            setVibeHistory(JSON.parse(cachedHistory));
+        }
+    }, []);
+
+    const updateVibeScores = (newScores, moodLabel) => {
+        setVibeScores(newScores);
+        localStorage.setItem("juicevibe_scores", JSON.stringify(newScores));
+
+        const avgScore = Math.round((newScores.energy + newScores.calmness + newScores.detox) / 3);
+        const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+        const todayName = dayNames[new Date().getDay()];
+
+        setVibeHistory((prev) => {
+            const updated = [...prev];
+            if (updated.length >= 5) {
+                updated.shift();
+            }
+            updated.push({
+                date: todayName,
+                mood: moodLabel || "Curhat AI",
+                score: avgScore
+            });
+            localStorage.setItem("juicevibe_history", JSON.stringify(updated));
+            return updated;
+        });
+    };
 
     const showToast = (message) => {
         setToastMessage(message);
         setTimeout(() => setToastMessage(null), 3000);
     };
 
+    // ============ SCROLL REVEAL ============
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => entries.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.classList.add('visible');
+                }
+            }),
+            { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+        );
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        return () => observer.disconnect();
+    }, []);
+
     // ============ MOCK DATA ============
     const moodOptions = [
-        { emoji: "😫", label: "Stres Tugas", mood: "stress" },
-        { emoji: "🥱", label: "Kurang Tidur", mood: "tired" },
-        { emoji: "😡", label: "Bad Mood", mood: "badmood" },
-        { emoji: "🏃", label: "Butuh Energi", mood: "energy" },
-        { emoji: "🌸", label: "Nyeri Haid", mood: "pms" },
+        { icon: Brain, label: "Stres Tugas", mood: "stress", color: "text-purple-500" },
+        { icon: Moon, label: "Kurang Tidur", mood: "tired", color: "text-blue-400" },
+        { icon: CloudRain, label: "Bad Mood", mood: "badmood", color: "text-slate-500" },
+        { icon: Zap, label: "Butuh Energi", mood: "energy", color: "text-orange-500" },
+        { icon: Heart, label: "Nyeri Haid", mood: "pms", color: "text-rose-400" },
     ];
 
     const comboMenu = [
@@ -292,30 +368,30 @@ export default function VibeJuice() {
     ];
 
     const singleJuiceMenu = [
-        { id: 101, name: "Pure Fuji Apple", image: "/images/apple.png", price: 25000, unit: "per cup", origin: "Lokal", benefits: ["Kaya antioksidan", "Menjaga kesehatan jantung", "Tinggi serat untuk pencernaan"] },
-        { id: 102, name: "Green Spinach", image: "/images/spinach.png", price: 28000, unit: "per cup", origin: "Organik", benefits: ["Tinggi zat besi", "Memperkuat tulang", "Meningkatkan fungsi otak"] },
-        { id: 103, name: "Lemon Shot", image: "/images/lemon.png", price: 15000, unit: "per shot", origin: "Premium", benefits: ["Sumber Vitamin C terbaik", "Membantu detoksifikasi", "Meningkatkan imunitas"] },
-        { id: 104, name: "Carrot Cold-Press", image: "/images/carrot.png", price: 25000, unit: "per cup", origin: "Lokal", benefits: ["Menjaga kesehatan mata", "Menurunkan risiko kanker", "Memperkuat imunitas"] },
-        { id: 105, name: "Strawberry Fresh", image: "/images/strawberry.png", price: 30000, unit: "per cup", origin: "Organik", benefits: ["Mencerahkan kulit", "Mencegah penuaan dini", "Kaya antioksidan"] },
-        { id: 106, name: "Ginger Shot", image: "/images/ginger.png", price: 15000, unit: "per shot", origin: "Herbal Lokal", benefits: ["Meredakan peradangan", "Meningkatkan metabolisme", "Meredakan mual"] },
-        { id: 107, name: "Red Beetroot", image: "/images/beetroot.png", price: 28000, unit: "per cup", origin: "Lokal", benefits: ["Detoks hati alami", "Meningkatkan stamina darah", "Menurunkan tekanan darah"] },
-        { id: 108, name: "Celery Detox", image: "/images/celery.png", price: 30000, unit: "per cup", origin: "Premium", benefits: ["Menghidrasi tubuh", "Mengontrol asam urat", "Pembersih ginjal"] },
-        { id: 109, name: "Cucumber Splash", image: "/images/cucumber.png", price: 20000, unit: "per cup", origin: "Lokal", benefits: ["Super hidrasi kulit", "Mengurangi kantung mata", "Membuang racun (detoks)"] },
-        { id: 110, name: "Pineapple Boost", image: "/images/pineapple.png", price: 28000, unit: "per cup", origin: "Subang", benefits: ["Kaya enzim pencernaan", "Meredakan batuk", "Anti-inflamasi kuat"] },
-        { id: 111, name: "Watermelon Rush", image: "/images/watermelon.png", price: 25000, unit: "per cup", origin: "Lokal", benefits: ["Pencegah dehidrasi", "Mengandung lycopene", "Baik untuk pemulihan otot"] },
-        { id: 112, name: "Pure Orange", image: "/images/orange.png", price: 30000, unit: "per cup", origin: "Impor", benefits: ["Suntikan energi instan", "Kolagen alami kulit", "Boost sistem imun"] },
-        { id: 113, name: "Mango Delight", image: "/images/mango.png", price: 28000, unit: "per cup", origin: "Lokal", benefits: ["Meningkatkan mood", "Melancarkan pencernaan", "Vitamin A tinggi"] },
-        { id: 114, name: "Avocado Smooth", image: "/images/avocado.png", price: 35000, unit: "per cup", origin: "Premium", benefits: ["Lemak baik (HDL)", "Mengenyangkan lebih lama", "Nutrisi otak optimal"] },
-        { id: 115, name: "Tomato Antioxidant", image: "/images/tomato.png", price: 25000, unit: "per cup", origin: "Organik", benefits: ["Antioksidan kuat", "Melindungi kulit dari UV", "Mendukung kesehatan jantung"] },
-        { id: 116, name: "Melon Refresh", image: "/images/melon.png", price: 26000, unit: "per cup", origin: "Lokal", benefits: ["Kaya hidrasi", "Mendinginkan tubuh", "Baik untuk mata"] },
-        { id: 117, name: "Red Dragon Fruit", image: "/images/dragonfruit.png", price: 30000, unit: "per cup", origin: "Organik", benefits: ["Tinggi antioksidan", "Melancarkan pencernaan", "Meningkatkan daya tahan"] },
-        { id: 118, name: "Pink Guava", image: "/images/guava.png", price: 25000, unit: "per cup", origin: "Lokal", benefits: ["Vitamin C ekstra", "Meningkatkan trombosit", "Mencegah sembelit"] },
-        { id: 119, name: "Kiwi Green", image: "/images/kiwi.png", price: 35000, unit: "per cup", origin: "Impor", benefits: ["Meningkatkan kualitas tidur", "Kaya vitamin E", "Memperkuat imun"] },
-        { id: 120, name: "Sweet Pear", image: "/images/pear.png", price: 28000, unit: "per cup", origin: "Impor", benefits: ["Meredakan panas dalam", "Tinggi serat", "Pereda batuk alami"] },
-        { id: 121, name: "Pomegranate Red", image: "/images/pomegranate.png", price: 38000, unit: "per cup", origin: "Impor", benefits: ["Kaya polifenol", "Mencegah peradangan", "Menjaga daya ingat"] },
-        { id: 122, name: "Fresh Soursop", image: "/images/soursop.png", price: 26000, unit: "per cup", origin: "Lokal", benefits: ["Anti-kanker alami", "Meredakan asam urat", "Meningkatkan energi"] },
-        { id: 123, name: "Green Kale Detox", image: "/images/kale.png", price: 32000, unit: "per cup", origin: "Organik", benefits: ["Raja superfood", "Detoksifikasi kuat", "Tinggi vitamin K"] },
-        { id: 124, name: "Sweet Starfruit", image: "/images/starfruit.png", price: 24000, unit: "per cup", origin: "Lokal", benefits: ["Menurunkan darah tinggi", "Rendah kalori", "Meredakan nyeri sendi"] }
+        { id: 101, name: "Apel Fuji Murni", image: "/images/apple.png", price: 15000, unit: "per cup", origin: "Lokal", benefits: ["Kaya antioksidan", "Menjaga kesehatan jantung", "Tinggi serat untuk pencernaan"] },
+        { id: 102, name: "Bayam Hijau", image: "/images/spinach.png", price: 18000, unit: "per cup", origin: "Organik", benefits: ["Tinggi zat besi", "Memperkuat tulang", "Meningkatkan fungsi otak"] },
+        { id: 103, name: "Sari Lemon Shot", image: "/images/lemon.png", price: 15000, unit: "per shot", origin: "Premium", benefits: ["Sumber Vitamin C terbaik", "Membantu detoksifikasi", "Meningkatkan imunitas"] },
+        { id: 104, name: "Wortel Cold-Press", image: "/images/carrot.png", price: 15000, unit: "per cup", origin: "Lokal", benefits: ["Menjaga kesehatan mata", "Menurunkan risiko kanker", "Memperkuat imunitas"] },
+        { id: 105, name: "Stroberi Segar", image: "/images/strawberry.png", price: 20000, unit: "per cup", origin: "Organik", benefits: ["Mencerahkan kulit", "Mencegah penuaan dini", "Kaya antioksidan"] },
+        { id: 106, name: "Sari Jahe Shot", image: "/images/ginger.png", price: 15000, unit: "per shot", origin: "Herbal Lokal", benefits: ["Meredakan peradangan", "Meningkatkan metabolisme", "Meredakan mual"] },
+        { id: 107, name: "Bit Merah", image: "/images/beetroot.png", price: 15000, unit: "per cup", origin: "Lokal", benefits: ["Detoks hati alami", "Meningkatkan stamina darah", "Menurunkan tekanan darah"] },
+        { id: 108, name: "Detoks Seledri", image: "/images/celery.png", price: 20000, unit: "per cup", origin: "Premium", benefits: ["Menghidrasi tubuh", "Mengontrol asam urat", "Pembersih ginjal"] },
+        { id: 109, name: "Timun Segar", image: "/images/cucumber.png", price: 12000, unit: "per cup", origin: "Lokal", benefits: ["Super hidrasi kulit", "Mengurangi kantung mata", "Membuang racun (detoks)"] },
+        { id: 110, name: "Nanas Booster", image: "/images/pineapple.png", price: 20000, unit: "per cup", origin: "Subang", benefits: ["Kaya enzim pencernaan", "Meredakan batuk", "Anti-inflamasi kuat"] },
+        { id: 111, name: "Semangka Segar", image: "/images/watermelon.png", price: 18000, unit: "per cup", origin: "Lokal", benefits: ["Pencegah dehidrasi", "Mengandung lycopene", "Baik untuk pemulihan otot"] },
+        { id: 112, name: "Jeruk Murni", image: "/images/orange.png", price: 18000, unit: "per cup", origin: "Impor", benefits: ["Suntikan energi instan", "Kolagen alami kulit", "Boost sistem imun"] },
+        { id: 113, name: "Mangga Manis", image: "/images/mango.png", price: 20000, unit: "per cup", origin: "Lokal", benefits: ["Meningkatkan mood", "Melancarkan pencernaan", "Vitamin A tinggi"] },
+        { id: 114, name: "Alpukat Lembut", image: "/images/avocado.png", price: 25000, unit: "per cup", origin: "Premium", benefits: ["Lemak baik (HDL)", "Mengenyangkan lebih lama", "Nutrisi otak optimal"] },
+        { id: 115, name: "Tomat Antioksidan", image: "/images/tomato.png", price: 16000, unit: "per cup", origin: "Organik", benefits: ["Antioksidan kuat", "Melindungi kulit dari UV", "Mendukung kesehatan jantung"] },
+        { id: 116, name: "Melon Segar", image: "/images/melon.png", price: 18000, unit: "per cup", origin: "Lokal", benefits: ["Kaya hidrasi", "Mendinginkan tubuh", "Baik untuk mata"] },
+        { id: 117, name: "Buah Naga Merah", image: "/images/dragonfruit.png", price: 25000, unit: "per cup", origin: "Organik", benefits: ["Tinggi antioksidan", "Melancarkan pencernaan", "Meningkatkan daya tahan"] },
+        { id: 118, name: "Jambu Biji Merah", image: "/images/guava.png", price: 20000, unit: "per cup", origin: "Lokal", benefits: ["Vitamin C ekstra", "Meningkatkan trombosit", "Mencegah sembelit"] },
+        { id: 119, name: "Kiwi Hijau", image: "/images/kiwi.png", price: 23000, unit: "per cup", origin: "Impor", benefits: ["Meningkatkan kualitas tidur", "Kaya vitamin E", "Memperkuat imun"] },
+        { id: 120, name: "Pir Manis", image: "/images/pear.png", price: 25000, unit: "per cup", origin: "Impor", benefits: ["Meredakan panas dalam", "Tinggi serat", "Pereda batuk alami"] },
+        { id: 121, name: "Delima Merah", image: "/images/pomegranate.png", price: 25000, unit: "per cup", origin: "Impor", benefits: ["Kaya polifenol", "Mencegah peradangan", "Menjaga daya ingat"] },
+        { id: 122, name: "Sirsak Segar", image: "/images/soursop.png", price: 23000, unit: "per cup", origin: "Lokal", benefits: ["Anti-kanker alami", "Meredakan asam urat", "Meningkatkan energi"] },
+        { id: 123, name: "Detoks Kale Hijau", image: "/images/kale.png", price: 25000, unit: "per cup", origin: "Organik", benefits: ["Raja superfood", "Detoksifikasi kuat", "Tinggi vitamin K"] },
+        { id: 124, name: "Belimbing Manis", image: "/images/starfruit.png", price: 24000, unit: "per cup", origin: "Lokal", benefits: ["Menurunkan darah tinggi", "Rendah kalori", "Meredakan nyeri sendi"] }
     ];
 
     // ============ FUNCTIONS ============
@@ -323,6 +399,10 @@ export default function VibeJuice() {
         setSelectedMood(label);
         setUserInput(`Saya sedang ${label.toLowerCase()}, tolong racikkan jus yang cocok untuk kondisi saya.`);
         setRecommendation(null);
+        const scores = moodScores[label];
+        if (scores) {
+            updateVibeScores(scores, label);
+        }
     };
 
     const handleConsultation = async () => {
@@ -341,15 +421,18 @@ export default function VibeJuice() {
             const data = await res.json();
 
             if (!res.ok) {
-                showToast("❌ " + (data.error || "Gagal menghubungi AI Server"));
+                showToast("Gagal menghubungi AI Server: " + (data.error || "Coba lagi."));
                 return;
             }
 
             setRecommendation(data);
             setSelectedMood(null);
+            if (data.scores) {
+                updateVibeScores(data.scores, userInput.slice(0, 15) + (userInput.length > 15 ? "..." : ""));
+            }
         } catch (error) {
             console.error("Client Error:", error);
-            showToast("❌ Terjadi kesalahan jaringan saat memanggil Gemini API.");
+            showToast("Terjadi kesalahan jaringan saat memanggil Gemini API.");
         } finally {
             setIsLoading(false);
         }
@@ -378,7 +461,7 @@ export default function VibeJuice() {
                 iceLevel
             }];
         });
-        showToast(`✨ ${itemToCustomize.name} ditambahkan ke keranjang!`);
+        showToast(`${itemToCustomize.name} ditambahkan ke keranjang!`);
         setItemToCustomize(null);
     };
 
@@ -406,17 +489,44 @@ export default function VibeJuice() {
         setCartItems((prevItems) => prevItems.filter(item => item.id !== id));
     };
 
-    const handleCheckout = () => {
+    const handleCheckout = async () => {
         if (!customerName.trim()) {
-            showToast("⚠️ Silakan isi Nama Pemesan terlebih dahulu!");
+            showToast("Silakan isi Nama Pemesan terlebih dahulu!");
             return;
         }
         if (orderType === "Dine-in" && !tableNumber.trim()) {
-            showToast("⚠️ Silakan isi Nomor Meja untuk pesanan Dine-in!");
+            showToast("Silakan isi Nomor Meja untuk pesanan Dine-in!");
             return;
         }
-        setIsCartOpen(false);
-        setIsPaymentSelectionOpen(true);
+
+        // Trigger AI upsell if cart has 2+ distinct items
+        if (cartItems.length >= 2) {
+            setIsCartOpen(false);
+            setIsLoadingUpsell(true);
+            setIsUpsellOpen(true);
+            try {
+                const res = await fetch("/api/upsell", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ cartItems })
+                });
+                const data = await res.json();
+                if (data.upsell) {
+                    setUpsellSuggestion(data);
+                } else {
+                    setIsUpsellOpen(false);
+                    setIsPaymentSelectionOpen(true);
+                }
+            } catch {
+                setIsUpsellOpen(false);
+                setIsPaymentSelectionOpen(true);
+            } finally {
+                setIsLoadingUpsell(false);
+            }
+        } else {
+            setIsCartOpen(false);
+            setIsPaymentSelectionOpen(true);
+        }
     };
 
     const handleSelectPayment = (method) => {
@@ -477,7 +587,7 @@ export default function VibeJuice() {
                     <nav className="hidden md:flex items-center gap-8">
                         <a href="#" className="text-sm font-semibold text-emerald-800 hover:text-orange-500 transition-colors">Home</a>
                         <a href="#about" className="text-sm font-semibold text-slate-500 hover:text-emerald-600 transition-colors">About Us</a>
-                        <a href="#combo" className="text-sm font-semibold text-slate-500 hover:text-emerald-600 transition-colors">Combo Jus</a>
+                        <a href="#combo" className="text-sm font-semibold text-slate-500 hover:text-emerald-600 transition-colors">Combo Juice</a>
                         <a href="#single" className="text-sm font-semibold text-slate-500 hover:text-emerald-600 transition-colors">Single Juice</a>
                         <a href="#contact" className="text-sm font-semibold text-slate-500 hover:text-emerald-600 transition-colors">Contact</a>
                     </nav>
@@ -507,32 +617,32 @@ export default function VibeJuice() {
 
             {/* ========== HERO / ABOUT SECTION ========== */}
             <section id="about" className="bg-emerald-800 text-white py-16 px-6 relative overflow-hidden">
-                <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
+                <div className="absolute top-0 right-0 opacity-10 pointer-events-none animate-spin-slow">
                     <Leaf className="w-96 h-96 transform rotate-45 translate-x-1/3 -translate-y-1/3" />
                 </div>
-                <div className="absolute bottom-0 left-0 opacity-10 pointer-events-none">
+                <div className="absolute bottom-0 left-0 opacity-10 pointer-events-none animate-float-slow">
                     <Sparkles className="w-64 h-64 transform -translate-x-1/3 translate-y-1/4" />
                 </div>
                 <div className="max-w-4xl mx-auto text-center relative z-10">
-                    <span className="px-4 py-1.5 rounded-full bg-emerald-700 border border-emerald-600/50 text-emerald-100 text-xs font-bold uppercase tracking-widest mb-6 inline-block shadow-sm">
+                    <span className="px-4 py-1.5 rounded-full bg-emerald-700 border border-emerald-600/50 text-emerald-100 text-xs font-bold uppercase tracking-widest mb-6 inline-block shadow-sm animate-hero-1">
                         Welcome to JuiceVibe Dashboard
                     </span>
-                    <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 leading-tight drop-shadow-md">
-                        Nutrisi Cerdas Sesuai <span className="text-orange-400">Mood Anda</span>.
+                    <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 leading-tight drop-shadow-md animate-hero-2">
+                        Nutrisi Cerdas Sesuai <span className="animate-gradient-text">Mood Anda</span>.
                     </h2>
-                    <p className="text-lg md:text-xl text-emerald-100/90 leading-relaxed mb-10 font-light">
+                    <p className="text-lg md:text-xl text-emerald-100/90 leading-relaxed mb-10 font-light animate-hero-3">
                         JuiceVibe bukan sekadar toko jus pada umumnya. Kami menggunakan teknologi AI terdepan untuk menganalisis kondisi fisik dan psikologis Anda hari ini, lalu meracik kombinasi jus segar yang paling tepat untuk mengembalikan energi, fokus, dan mood Anda.
                     </p>
-                    <div className="flex flex-wrap items-center justify-center gap-4">
-                        <div className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 transition-colors cursor-pointer rounded-xl backdrop-blur-sm border border-white/5">
+                    <div className="flex flex-wrap items-center justify-center gap-4 animate-hero-4">
+                        <div className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer rounded-xl backdrop-blur-sm border border-white/5">
                             <Sparkles className="w-5 h-5 text-orange-400" />
                             <span className="text-sm font-semibold">Analisis AI Akurat</span>
                         </div>
-                        <div className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 transition-colors cursor-pointer rounded-xl backdrop-blur-sm border border-white/5">
+                        <div className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer rounded-xl backdrop-blur-sm border border-white/5">
                             <Leaf className="w-5 h-5 text-emerald-300" />
                             <span className="text-sm font-semibold">100% Bahan Organik</span>
                         </div>
-                        <div className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 transition-colors cursor-pointer rounded-xl backdrop-blur-sm border border-white/5">
+                        <div className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer rounded-xl backdrop-blur-sm border border-white/5">
                             <Zap className="w-5 h-5 text-yellow-400" />
                             <span className="text-sm font-semibold">Instan Energy Boost</span>
                         </div>
@@ -542,7 +652,7 @@ export default function VibeJuice() {
 
             {/* ========== OUR VALUES SECTION ========== */}
             <section id="about" className="max-w-7xl mx-auto px-6 py-14">
-                <div className="text-center mb-10">
+                <div className="text-center mb-10 reveal">
                     <span className="px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-widest mb-4 inline-block border border-emerald-200">
                         Nilai Kami
                     </span>
@@ -556,7 +666,7 @@ export default function VibeJuice() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Value 1 */}
-                    <div className="group bg-white rounded-2xl p-7 border border-emerald-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <div className="group bg-white rounded-2xl p-7 border border-emerald-100 shadow-sm hover:shadow-lg hover:-translate-y-2 transition-all duration-300 reveal reveal-delay-1">
                         <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-emerald-500 transition-colors duration-300">
                             <Leaf className="w-7 h-7 text-emerald-600 group-hover:text-white transition-colors duration-300" />
                         </div>
@@ -567,7 +677,7 @@ export default function VibeJuice() {
                     </div>
 
                     {/* Value 2 */}
-                    <div className="group bg-white rounded-2xl p-7 border border-orange-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <div className="group bg-white rounded-2xl p-7 border border-orange-100 shadow-sm hover:shadow-lg hover:-translate-y-2 transition-all duration-300 reveal reveal-delay-2">
                         <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-orange-500 transition-colors duration-300">
                             <Sparkles className="w-7 h-7 text-orange-500 group-hover:text-white transition-colors duration-300" />
                         </div>
@@ -578,7 +688,7 @@ export default function VibeJuice() {
                     </div>
 
                     {/* Value 3 */}
-                    <div className="group bg-white rounded-2xl p-7 border border-teal-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <div className="group bg-white rounded-2xl p-7 border border-teal-100 shadow-sm hover:shadow-lg hover:-translate-y-2 transition-all duration-300 reveal reveal-delay-3">
                         <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-teal-500 transition-colors duration-300">
                             <Shield className="w-7 h-7 text-teal-600 group-hover:text-white transition-colors duration-300" />
                         </div>
@@ -593,140 +703,256 @@ export default function VibeJuice() {
 
             {/* ========== MAIN WORKSPACE ========== */}
             <main id="ai-station" className="max-w-7xl mx-auto px-6 py-12 flex flex-col gap-12">
-                {/* ===== KOLOM ATAS: AI CONSULTANT STATION ===== */}
-                <section className="space-y-6">
-                    {/* Greeting */}
-                    <div className="bg-white rounded-2xl border border-emerald-100/60 p-6 shadow-sm">
-                        <div className="flex items-start gap-3">
-                            <Sparkles className="w-6 h-6 text-orange-500 flex-shrink-0 mt-1" />
+                {/* ===== WORKSPACE ROW: AI CONSULTANT & ANALYTICS ===== */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    {/* ===== KOLOM KIRI (col-span-2): AI CONSULTANT STATION ===== */}
+                    <section className="lg:col-span-2 space-y-6">
+                        {/* Greeting */}
+                        <div className="bg-white rounded-2xl border border-emerald-100/60 p-6 shadow-sm reveal">
+                            <div className="flex items-start gap-3">
+                                <Sparkles className="w-6 h-6 text-orange-500 flex-shrink-0 mt-1 animate-float" />
+                                <div>
+                                    <h2 className="text-lg font-semibold text-emerald-800 mb-1">
+                                        Halo, {userName}!
+                                    </h2>
+                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                        Bagaimana kondisi psikologis & fisikmu hari ini? Biarkan AI
+                                        kami merekomendasikan jus kesehatan yang perfect untuk moodmu
+                                        saat ini.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Mood Quick Toggles */}
+                        <div className="reveal reveal-left reveal-delay-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block">
+                                Pilih Kondisimu:
+                            </label>
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                {moodOptions.map((mood) => (
+                                    <div
+                                        key={mood.mood}
+                                        onClick={() => handleMoodClick(mood.label)}
+                                        className={`cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 text-center flex flex-col items-center justify-center ${selectedMood === mood.label
+                                            ? "bg-emerald-100/80 border-emerald-500 shadow-md"
+                                            : "bg-white border-emerald-100/40 hover:border-emerald-300 hover:bg-emerald-50/40"
+                                            }`}
+                                    >
+                                        <div className="mb-2">
+                                            <mood.icon className={`w-5 h-5 ${mood.color}`} />
+                                        </div>
+                                        <p className="text-[11px] font-bold text-slate-700 leading-tight">
+                                            {mood.label}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Chat Input Box */}
+                        <div className="bg-white rounded-2xl border border-emerald-100/60 p-5 shadow-sm reveal reveal-right reveal-delay-2">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block">
+                                Atau Ceritakan Keluhan Bebasmu:
+                            </label>
+                            <textarea
+                                value={userInput}
+                                onChange={(e) => setUserInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleConsultation();
+                                    }
+                                }}
+                                disabled={isLoading}
+                                placeholder="Contoh: Saya kurang tidur dan butuh energi untuk meeting penting..."
+                                className="w-full h-24 p-3 text-sm border border-emerald-100/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none bg-slate-50 text-slate-800 placeholder-slate-400 disabled:opacity-50"
+                            />
+                            <button
+                                onClick={handleConsultation}
+                                disabled={isLoading}
+                                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        AI Sedang Meracik...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send className="w-4 h-4" />
+                                        Konsultasi dengan AI
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Recommendation Result */}
+                        {recommendation && (
+                            <div className="bg-gradient-to-br from-emerald-100/60 to-emerald-50/80 rounded-2xl border border-emerald-300/50 p-6 shadow-md animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="flex items-start gap-3 mb-4">
+                                    <Heart className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
+                                    <div className="flex-1">
+                                        <h3 className="text-xl font-bold text-emerald-800">
+                                            {recommendation.name}
+                                        </h3>
+                                        <p className="text-sm text-emerald-700/80 mt-1">
+                                            {recommendation.description}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3 mb-5 pt-4 border-t border-emerald-200/60">
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                                            Khasiat:
+                                        </p>
+                                        <p className="text-sm text-slate-700 leading-relaxed">
+                                            {recommendation.benefits}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                                            Penelitian Ilmiah:
+                                        </p>
+                                        <p className="text-xs text-slate-600 italic">
+                                            "{recommendation.scientific}"
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-4 border-t border-emerald-200/60">
+                                    <span className="text-2xl font-bold text-emerald-700">
+                                        Rp {recommendation.price.toLocaleString("id-ID")}
+                                    </span>
+                                    <button
+                                        onClick={handleAddRecommendedToCart}
+                                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                        Masukkan Keranjang
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </section>
+
+                    {/* ===== KOLOM KANAN (col-span-1): VIBE ANALYTICS DASHBOARD ===== */}
+                    <section className="bg-white rounded-3xl border border-emerald-100/60 p-6 shadow-sm reveal space-y-6 lg:sticky lg:top-24">
+                        <div className="flex items-center gap-2">
+                            <Activity className="w-5 h-5 text-emerald-600 animate-pulse" />
+                            <h3 className="font-bold text-base text-emerald-800">Vibe Health Analytics</h3>
+                        </div>
+
+                        {/* Circular Progress (Overall Health Score) */}
+                        <div className="flex flex-col items-center justify-center py-5 bg-gradient-to-br from-emerald-50 to-teal-50/50 rounded-2xl border border-emerald-100/40 relative overflow-hidden">
+                            <div className="relative w-28 h-28 flex items-center justify-center">
+                                {/* SVG Circular Dial */}
+                                <svg className="w-full h-full transform -rotate-90">
+                                    <circle
+                                        cx="56"
+                                        cy="56"
+                                        r="45"
+                                        stroke="#e2e8f0"
+                                        strokeWidth="7"
+                                        fill="transparent"
+                                    />
+                                    <circle
+                                        cx="56"
+                                        cy="56"
+                                        r="45"
+                                        stroke="url(#emeraldGradient)"
+                                        strokeWidth="7"
+                                        fill="transparent"
+                                        strokeDasharray={2 * Math.PI * 45}
+                                        strokeDashoffset={2 * Math.PI * 45 * (1 - Math.round((vibeScores.energy + vibeScores.calmness + vibeScores.detox) / 3) / 100)}
+                                        className="transition-all duration-1000 ease-out"
+                                        strokeLinecap="round"
+                                    />
+                                    <defs>
+                                        <linearGradient id="emeraldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#059669" />
+                                            <stop offset="100%" stopColor="#10b981" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div className="absolute flex flex-col items-center justify-center">
+                                    <span className="text-3xl font-extrabold text-emerald-800">
+                                        {Math.round((vibeScores.energy + vibeScores.calmness + vibeScores.detox) / 3)}%
+                                    </span>
+                                    <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider">Vibe Index</span>
+                                </div>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-3 font-medium text-center px-4 leading-relaxed">
+                                Kondisi mental & fisik terpadu Anda saat ini.
+                            </p>
+                        </div>
+
+                        {/* Individual Sliders */}
+                        <div className="space-y-4">
                             <div>
-                                <h2 className="text-lg font-semibold text-emerald-800 mb-1">
-                                    Halo {userName}! 👋
-                                </h2>
-                                <p className="text-sm text-slate-600 leading-relaxed">
-                                    Bagaimana kondisi psikologis & fisikmu hari ini? Biarkan AI
-                                    kami merekomendasikan jus kesehatan yang perfect untuk moodmu
-                                    saat ini.
-                                </p>
+                                <div className="flex justify-between text-xs font-semibold mb-1">
+                                    <span className="text-slate-600 flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-orange-500" /> Energi & Stamina</span>
+                                    <span className="text-emerald-700">{vibeScores.energy}%</span>
+                                </div>
+                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div className="bg-gradient-to-r from-orange-500 to-orange-400 h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${vibeScores.energy}%` }}></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="flex justify-between text-xs font-semibold mb-1">
+                                    <span className="text-slate-600 flex items-center gap-1.5"><Brain className="w-3.5 h-3.5 text-purple-500" /> Ketenangan & Fokus</span>
+                                    <span className="text-emerald-700">{vibeScores.calmness}%</span>
+                                </div>
+                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div className="bg-gradient-to-r from-purple-500 to-purple-400 h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${vibeScores.calmness}%` }}></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="flex justify-between text-xs font-semibold mb-1">
+                                    <span className="text-slate-600 flex items-center gap-1.5"><Leaf className="w-3.5 h-3.5 text-emerald-500" /> Detoks & Kejernihan</span>
+                                    <span className="text-emerald-700">{vibeScores.detox}%</span>
+                                </div>
+                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div className="bg-gradient-to-r from-emerald-600 to-emerald-400 h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${vibeScores.detox}%` }}></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Mood Quick Toggles */}
-                    <div>
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block">
-                            Pilih Kondisimu:
-                        </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {moodOptions.map((mood) => (
-                                <div
-                                    key={mood.mood}
-                                    onClick={() => handleMoodClick(mood.label)}
-                                    className={`cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 ${selectedMood === mood.label
-                                        ? "bg-emerald-100/80 border-emerald-500 shadow-md"
-                                        : "bg-white border-emerald-100/40 hover:border-emerald-300 hover:bg-emerald-50/40"
-                                        }`}
-                                >
-                                    <div className="text-2xl mb-2">{mood.emoji}</div>
-                                    <p className="text-xs font-medium text-slate-700">
-                                        {mood.label}
-                                    </p>
-                                </div>
-                            ))}
+                        {/* Recent Vibe Timeline Logs */}
+                        <div className="pt-4 border-t border-emerald-100/50">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-3">Rekam Jejak Mood</label>
+                            <div className="space-y-3">
+                                {vibeHistory.map((item, index) => (
+                                    <div key={index} className="flex items-center justify-between text-xs">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                                            <span className="font-semibold text-slate-700">{item.date}</span>
+                                            <span className="text-slate-400 max-w-[100px] truncate">({item.mood})</span>
+                                        </div>
+                                        <span className="font-bold text-emerald-600">{item.score}%</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Chat Input Box */}
-                    <div className="bg-white rounded-2xl border border-emerald-100/60 p-5 shadow-sm">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block">
-                            Atau Ceritakan Keluhan Bebasmu:
-                        </label>
-                        <textarea
-                            value={userInput}
-                            onChange={(e) => setUserInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleConsultation();
-                                }
-                            }}
-                            disabled={isLoading}
-                            placeholder="Contoh: Saya kurang tidur dan butuh energi untuk meeting penting..."
-                            className="w-full h-24 p-3 text-sm border border-emerald-100/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none bg-slate-50 text-slate-800 placeholder-slate-400 disabled:opacity-50"
-                        />
+                        {/* Preskripsi Digital Action */}
                         <button
-                            onClick={handleConsultation}
-                            disabled={isLoading}
-                            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                            onClick={() => setIsPrescriptionOpen(true)}
+                            className="w-full py-2.5 bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-900 hover:to-emerald-800 text-white font-bold rounded-xl text-xs transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center gap-2"
                         >
-                            {isLoading ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    AI Sedang Meracik...
-                                </>
-                            ) : (
-                                <>
-                                    <Send className="w-4 h-4" />
-                                    Konsultasi dengan AI
-                                </>
-                            )}
+                            <CreditCard className="w-4 h-4" />
+                            Cetak Kartu Preskripsi AI
                         </button>
-                    </div>
-
-                    {/* Recommendation Result */}
-                    {recommendation && (
-                        <div className="bg-gradient-to-br from-emerald-100/60 to-emerald-50/80 rounded-2xl border border-emerald-300/50 p-6 shadow-md animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <div className="flex items-start gap-3 mb-4">
-                                <Heart className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
-                                <div className="flex-1">
-                                    <h3 className="text-xl font-bold text-emerald-800">
-                                        {recommendation.name}
-                                    </h3>
-                                    <p className="text-sm text-emerald-700/80 mt-1">
-                                        {recommendation.description}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3 mb-5 pt-4 border-t border-emerald-200/60">
-                                <div>
-                                    <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                                        Khasiat:
-                                    </p>
-                                    <p className="text-sm text-slate-700 leading-relaxed">
-                                        {recommendation.benefits}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                                        Penelitian Ilmiah:
-                                    </p>
-                                    <p className="text-xs text-slate-600 italic">
-                                        "{recommendation.scientific}"
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-4 border-t border-emerald-200/60">
-                                <span className="text-2xl font-bold text-emerald-700">
-                                    Rp {recommendation.price.toLocaleString("id-ID")}
-                                </span>
-                                <button
-                                    onClick={handleAddRecommendedToCart}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
-                                >
-                                    <Plus className="w-5 h-5" />
-                                    Masukkan Keranjang
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </section>
+                    </section>
+                </div>
 
                 {/* ===== KOLOM BAWAH: REKOMENDASI JUS COMBO ===== */}
-                <section id="combo" className="space-y-6">
+                <section id="combo" className="space-y-6 reveal">
                     <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="w-5 h-5 text-emerald-600" />
+                        <Sparkles className="w-5 h-5 text-emerald-600 animate-float" />
                         <h2 className="text-xl font-bold text-emerald-800">Rekomendasi Jus Combo</h2>
                     </div>
 
@@ -749,14 +975,14 @@ export default function VibeJuice() {
                     </div>
 
                     {/* Combo Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 reveal reveal-scale">
                         {filteredCombos.map((combo) => {
                             const IconComponent = combo.icon;
                             return (
                                 <div
                                     key={combo.id}
                                     onClick={() => setExpandedItem(expandedItem === combo.id ? null : combo.id)}
-                                    className="cursor-pointer group bg-white rounded-xl border border-emerald-100/50 p-5 hover:shadow-lg hover:border-emerald-300/60 transition-all duration-300 hover:translate-y-[-2px]"
+                                    className="cursor-pointer group bg-white rounded-xl border border-emerald-100/50 p-5 hover:shadow-lg hover:border-emerald-300/60 transition-all duration-300 hover:translate-y-[-4px]"
                                 >
                                     <div className="flex items-start justify-between mb-3">
                                         <div className="flex-1">
@@ -821,7 +1047,7 @@ export default function VibeJuice() {
 
                 {/* ========== SINGLE JUICE SECTION ========== */}
                 <section id="single" className="mt-6 pt-10 border-t border-emerald-100/60">
-                    <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center gap-3 mb-6 reveal">
                         <div className="p-2.5 bg-emerald-100/60 rounded-xl">
                             <Leaf className="w-6 h-6 text-emerald-600" />
                         </div>
@@ -831,9 +1057,9 @@ export default function VibeJuice() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 reveal reveal-scale">
                         {singleJuiceMenu.map((item) => (
-                            <div key={item.id} className="relative overflow-hidden group rounded-2xl border border-emerald-100/60 p-4 hover:shadow-xl hover:border-emerald-300/60 transition-all duration-300 hover:-translate-y-1 flex flex-col h-full text-center min-h-[240px] cursor-pointer" onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)}>
+                            <div key={item.id} className="relative overflow-hidden group rounded-2xl border border-emerald-100/60 p-4 hover:shadow-xl hover:border-emerald-300/60 transition-all duration-300 hover:-translate-y-1.5 flex flex-col h-full text-center min-h-[240px] cursor-pointer" onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)}>
                                 {/* Background Image & Dark Overlay */}
                                 <div className="absolute inset-0 w-full h-full z-0 rounded-2xl overflow-hidden">
                                     <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -885,9 +1111,9 @@ export default function VibeJuice() {
             {/* ========== TESTIMONIALS SECTION ========== */}
             <section className="bg-gradient-to-br from-emerald-50 to-slate-50 py-14">
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-10">
+                    <div className="text-center mb-10 reveal">
                         <span className="px-4 py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-widest mb-4 inline-block border border-amber-200">
-                            ⭐ Ulasan Pelanggan
+                            Ulasan Pelanggan
                         </span>
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-800 tracking-tight">
                             Kata Mereka tentang <span className="text-emerald-600">JuiceVibe</span>
@@ -896,8 +1122,8 @@ export default function VibeJuice() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        {reviews.map((review) => (
-                            <div key={review.id} className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col gap-3">
+                        {reviews.map((review, idx) => (
+                            <div key={review.id} className={`bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col gap-3 reveal reveal-scale reveal-delay-${Math.min(idx + 1, 5)}`}>
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                                         {review.name.charAt(0)}
@@ -923,7 +1149,7 @@ export default function VibeJuice() {
             <section id="contact" className="max-w-7xl mx-auto px-6 py-12 border-t border-emerald-100/60 mt-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center bg-emerald-50/50 rounded-3xl p-8 md:p-12 border border-emerald-100/60 shadow-sm">
                     {/* Contact Info */}
-                    <div className="space-y-8">
+                    <div className="space-y-8 reveal reveal-left">
                         <div>
                             <h2 className="text-3xl font-extrabold text-emerald-800 tracking-tight mb-3">Kunjungi JuiceVibe</h2>
                             <p className="text-emerald-600/80 leading-relaxed max-w-md">Rasakan kesegaran jus cold-pressed terbaik yang diracik langsung di depan mata Anda. Konsultasikan mood Anda langsung bersama barista AI kami di lokasi.</p>
@@ -968,7 +1194,7 @@ export default function VibeJuice() {
                     </div>
 
                     {/* Dummy Map Illustration */}
-                    <div className="w-full h-full min-h-[350px] bg-emerald-100/40 rounded-2xl border-2 border-emerald-200/50 relative overflow-hidden flex flex-col items-center justify-center group cursor-pointer hover:border-emerald-300 transition-colors">
+                    <div className="w-full h-full min-h-[350px] bg-emerald-100/40 rounded-2xl border-2 border-emerald-200/50 relative overflow-hidden flex flex-col items-center justify-center group cursor-pointer hover:border-emerald-300 transition-colors reveal reveal-right reveal-delay-2">
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cartographer.png')] opacity-20"></div>
                         <MapPin className="w-16 h-16 text-emerald-500 mb-3 relative z-10 group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-300" />
                         <div className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-xl shadow-lg border border-emerald-100 relative z-10 text-center">
@@ -984,10 +1210,7 @@ export default function VibeJuice() {
             {/* ========== FOOTER ========== */}
             <footer className="mt-12 py-6 border-t border-emerald-100/40 bg-white/50">
                 <div className="max-w-7xl mx-auto px-6 text-center text-xs text-slate-500">
-                    <p>
-                        ✨ Powered by Advanced AI Wellness Consultant | Fresh Juice, Fresh
-                        Vibes ✨
-                    </p>
+                    <p>Powered by Advanced AI Wellness Consultant &middot; Fresh Juice, Fresh Vibes</p>
                 </div>
             </footer>
 
@@ -1298,7 +1521,7 @@ export default function VibeJuice() {
                         }}
                         className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors mb-3"
                     >
-                        ⭐ Beri Ulasan
+                        Beri Ulasan
                     </button>
                     <button
                         onClick={() => setCheckoutSuccess(false)}
@@ -1306,6 +1529,117 @@ export default function VibeJuice() {
                     >
                         Lewati, Kembali ke Beranda
                     </button>
+                </div>
+            </div>
+            {/* ========== KARTU PRESKRIPSI DIGITAL MODAL ========== */}
+            <div className={`fixed inset-0 z-[150] flex items-center justify-center transition-opacity duration-300 ${isPrescriptionOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsPrescriptionOpen(false)}></div>
+                <div className={`bg-white rounded-[32px] max-w-md w-full mx-4 relative z-[160] shadow-2xl transition-transform duration-300 transform overflow-hidden flex flex-col ${isPrescriptionOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}>
+                    {/* Brand Header */}
+                    <div className="bg-emerald-800 p-6 text-center text-white relative">
+                        <button
+                            onClick={() => setIsPrescriptionOpen(false)}
+                            className="absolute top-4 right-4 text-emerald-100 hover:text-white transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Activity className="w-6 h-6 text-emerald-300 animate-pulse" />
+                        </div>
+                        <h3 className="text-xl font-bold">Resep Vibe-Check AI</h3>
+                        <p className="text-xs text-emerald-200 mt-1">JuiceVibe AI Wellness Clinic</p>
+                    </div>
+
+                    {/* Prescription Details */}
+                    <div className="p-6 space-y-6 bg-slate-50/50">
+                        {/* Patient info */}
+                        <div className="grid grid-cols-2 gap-4 text-xs pb-4 border-b border-dashed border-emerald-200">
+                            <div>
+                                <span className="text-slate-400 block uppercase tracking-wider font-semibold">Nama Pemesan</span>
+                                <span className="text-slate-700 font-bold text-sm block mt-0.5">{customerName || userName}</span>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-slate-400 block uppercase tracking-wider font-semibold">Tanggal Periksa</span>
+                                <span className="text-slate-700 font-bold text-sm block mt-0.5">{new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                            </div>
+                        </div>
+
+                        {/* Health Indexes */}
+                        <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-3">Peta Indeks Kesehatan</span>
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="bg-white border border-emerald-100 p-3 rounded-xl text-center">
+                                    <Zap className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+                                    <span className="text-[10px] font-bold text-slate-500 block">Stamina</span>
+                                    <span className="text-base font-extrabold text-emerald-700">{vibeScores.energy}%</span>
+                                </div>
+                                <div className="bg-white border border-emerald-100 p-3 rounded-xl text-center">
+                                    <Brain className="w-5 h-5 text-purple-500 mx-auto mb-1" />
+                                    <span className="text-[10px] font-bold text-slate-500 block">Ketenangan</span>
+                                    <span className="text-base font-extrabold text-emerald-700">{vibeScores.calmness}%</span>
+                                </div>
+                                <div className="bg-white border border-emerald-100 p-3 rounded-xl text-center">
+                                    <Leaf className="w-5 h-5 text-emerald-500 mx-auto mb-1" />
+                                    <span className="text-[10px] font-bold text-slate-500 block">Detoks</span>
+                                    <span className="text-base font-extrabold text-emerald-700">{vibeScores.detox}%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* AI Analysis Diagnosis */}
+                        <div className="bg-white border border-emerald-100/60 p-4 rounded-2xl">
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <Sparkles className="w-4 h-4 text-emerald-600 animate-float" />
+                                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Diagnosis Barista AI</span>
+                            </div>
+                            <p className="text-xs text-slate-600 leading-relaxed italic">
+                                {recommendation ? `"${recommendation.autoAddMessage || recommendation.description}"` : `"Berdasarkan taksiran rekam jejak, tubuh Anda memerlukan asupan vitamin harian untuk mengembalikan vitalitas optimal."`}
+                            </p>
+                        </div>
+
+                        {/* Prescribed Juice */}
+                        <div className="bg-emerald-50 border-2 border-emerald-100 rounded-2xl p-4 flex items-center justify-between">
+                            <div>
+                                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest block">Rekomendasi Jus Utama</span>
+                                <span className="text-base font-extrabold text-emerald-950 mt-1 block">
+                                    {recommendation ? recommendation.name : "Apel Fuji Murni"}
+                                </span>
+                            </div>
+                            <div className="w-10 h-10 bg-emerald-700 text-white rounded-full flex items-center justify-center font-bold">
+                                AI
+                            </div>
+                        </div>
+
+                        {/* QR Code Validation */}
+                        <div className="flex items-center justify-between gap-4 pt-4 border-t border-dashed border-emerald-200">
+                            <div className="flex-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Verifikasi Resep</span>
+                                <p className="text-[9px] text-slate-500 mt-1 leading-snug">Pindai kode QR untuk memvalidasi preskripsi ini secara resmi dengan platform Google Vibe.</p>
+                            </div>
+                            <div className="p-1.5 bg-white border border-emerald-100 rounded-xl flex-shrink-0">
+                                <QrCode className="w-12 h-12 text-slate-700" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer Actions */}
+                    <div className="p-6 bg-white border-t border-slate-100 flex gap-3">
+                        <button
+                            onClick={() => {
+                                showToast("Kartu preskripsi kesehatan Anda berhasil diunduh!");
+                                setIsPrescriptionOpen(false);
+                            }}
+                            className="flex-1 py-3 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs transition-colors shadow-md flex items-center justify-center gap-1.5"
+                        >
+                            Unduh PDF / PNG
+                        </button>
+                        <button
+                            onClick={() => setIsPrescriptionOpen(false)}
+                            className="py-3 px-5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition-colors"
+                        >
+                            Tutup
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1368,7 +1702,7 @@ export default function VibeJuice() {
             <div className={`fixed inset-0 z-[140] flex items-center justify-center transition-opacity duration-300 ${isReviewOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsReviewOpen(false)}></div>
                 <div className={`bg-white rounded-3xl p-7 max-w-sm w-full mx-4 relative z-10 shadow-2xl transition-transform duration-300 transform ${isReviewOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}>
-                    <h3 className="text-xl font-bold text-slate-800 mb-1">Bagaimana Pengalamanmu? 😊</h3>
+                    <h3 className="text-xl font-bold text-slate-800 mb-1">Bagaimana Pengalamanmu?</h3>
                     <p className="text-slate-500 text-sm mb-5">Ulasanmu sangat berarti bagi kami, Kak {customerName}!</p>
 
                     {/* Star Rating */}
@@ -1412,7 +1746,7 @@ export default function VibeJuice() {
                             };
                             setReviews(prev => [newReview, ...prev]);
                             setIsReviewOpen(false);
-                            showToast("🙏 Terima kasih atas ulasanmu!");
+                            showToast("Terima kasih atas ulasanmu!");
                         }}
                         className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors"
                     >
@@ -1425,7 +1759,7 @@ export default function VibeJuice() {
             <div className={`fixed inset-0 z-[160] flex items-center justify-center transition-opacity duration-300 ${isLoginOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsLoginOpen(false)}></div>
                 <div className={`bg-white rounded-3xl p-8 max-w-sm w-full mx-4 relative z-10 shadow-2xl transition-transform duration-300 transform ${isLoginOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}>
-                    
+
                     <div className="flex flex-col items-center mb-6">
                         <div className="w-16 h-16 rounded-full bg-emerald-600 flex items-center justify-center text-white text-2xl font-bold mb-3 shadow-lg">
                             {loginInput.charAt(0).toUpperCase() || "?"}
@@ -1454,7 +1788,7 @@ export default function VibeJuice() {
                             if (loginInput.trim()) {
                                 setUserName(loginInput.trim());
                                 setIsLoginOpen(false);
-                                showToast(`👋 Selamat datang, ${loginInput.trim()}!`);
+                                showToast(`Selamat datang, ${loginInput.trim()}!`);
                             }
                         }}
                         disabled={!loginInput.trim()}
@@ -1462,6 +1796,90 @@ export default function VibeJuice() {
                     >
                         Mulai Session
                     </button>
+                </div>
+            </div>
+
+            {/* ========== AI UPSELL MODAL ========== */}
+            <div className={`fixed inset-0 z-[150] flex items-end sm:items-center justify-center transition-opacity duration-300 ${isUpsellOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { if (!isLoadingUpsell) { setIsUpsellOpen(false); setIsPaymentSelectionOpen(true); } }}></div>
+                <div className={`bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md mx-0 sm:mx-4 relative z-10 shadow-2xl transition-transform duration-300 transform overflow-hidden ${isUpsellOpen ? "translate-y-0 scale-100" : "translate-y-8 scale-95"}`}>
+
+                    {/* Barista AI Header */}
+                    <div className="bg-gradient-to-r from-emerald-700 to-emerald-600 px-6 py-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                            <Sparkles className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <p className="text-white font-bold text-sm">Barista AI</p>
+                            <p className="text-emerald-200 text-xs">Rekomendasi personal untuk Anda</p>
+                        </div>
+                        <button onClick={() => { setIsUpsellOpen(false); setIsPaymentSelectionOpen(true); }} className="ml-auto text-white/60 hover:text-white">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="p-6">
+                        {isLoadingUpsell ? (
+                            <div className="flex flex-col items-center gap-3 py-8">
+                                <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+                                <p className="text-sm text-slate-500">Barista AI sedang menganalisis pesanan Anda...</p>
+                            </div>
+                        ) : upsellSuggestion ? (
+                            <>
+                                {/* Chat bubble */}
+                                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl rounded-tl-sm p-4 mb-5">
+                                    <p className="text-sm text-slate-700 leading-relaxed">{upsellSuggestion.barista_message}</p>
+                                </div>
+
+                                {/* Product card */}
+                                <div className="border border-slate-200 rounded-2xl p-4 mb-5 flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <Leaf className="w-6 h-6 text-emerald-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="font-bold text-slate-800">{upsellSuggestion.suggestedName}</p>
+                                        <p className="text-xs text-slate-500 mt-0.5">{upsellSuggestion.nutritionReason}</p>
+                                    </div>
+                                    <div className="text-right flex-shrink-0">
+                                        <p className="text-xs text-slate-400 line-through">Rp {upsellSuggestion.originalPrice?.toLocaleString("id-ID")}</p>
+                                        <p className="text-emerald-700 font-bold">Rp {upsellSuggestion.discountedPrice?.toLocaleString("id-ID")}</p>
+                                        <span className="inline-block bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full mt-1">
+                                            -{upsellSuggestion.discountPercent}% Bundle
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Action buttons */}
+                                <button
+                                    onClick={() => {
+                                        const item = singleJuiceMenu.find(m => m.id === upsellSuggestion.matchedMenuId);
+                                        if (item) {
+                                            const upsellId = `upsell-${item.id}`;
+                                            setCartItems(prev => {
+                                                const exists = prev.find(i => i.id === upsellId);
+                                                if (exists) return prev.map(i => i.id === upsellId ? { ...i, quantity: i.quantity + 1 } : i);
+                                                return [...prev, { ...item, id: upsellId, price: upsellSuggestion.discountedPrice, quantity: 1, sugarLevel: 'Normal', iceLevel: 'Normal', upsellItem: true }];
+                                            });
+                                        }
+                                        setIsUpsellOpen(false);
+                                        setUpsellSuggestion(null);
+                                        setIsPaymentSelectionOpen(true);
+                                        showToast(`${upsellSuggestion.suggestedName} ditambahkan dengan diskon ${upsellSuggestion.discountPercent}%!`);
+                                    }}
+                                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors mb-3 flex items-center justify-center gap-2"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Tambahkan dan Lanjutkan Bayar
+                                </button>
+                                <button
+                                    onClick={() => { setIsUpsellOpen(false); setUpsellSuggestion(null); setIsPaymentSelectionOpen(true); }}
+                                    className="w-full py-3 text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors"
+                                >
+                                    Tidak, lanjutkan pembayaran
+                                </button>
+                            </>
+                        ) : null}
+                    </div>
                 </div>
             </div>
 
