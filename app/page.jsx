@@ -22,6 +22,12 @@ import {
     Minus,
     Trash2,
     Loader2,
+    CheckCircle2,
+    CreditCard,
+    Wallet,
+    QrCode,
+    ChevronRight,
+    Moon,
 } from "lucide-react";
 
 export default function VibeJuice() {
@@ -35,6 +41,33 @@ export default function VibeJuice() {
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("All");
     const [expandedItem, setExpandedItem] = useState(null);
+    const [isCheckingOut, setIsCheckingOut] = useState(false);
+    const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+    const [isPaymentSelectionOpen, setIsPaymentSelectionOpen] = useState(false);
+    const [isQrisOpen, setIsQrisOpen] = useState(false);
+    const [isTransferOpen, setIsTransferOpen] = useState(false);
+    const [selectedBank, setSelectedBank] = useState(null);
+    const [toastMessage, setToastMessage] = useState(null);
+    const [customerName, setCustomerName] = useState("");
+    const [orderType, setOrderType] = useState("Dine-in");
+    const [tableNumber, setTableNumber] = useState("");
+    const [itemToCustomize, setItemToCustomize] = useState(null);
+    const [sugarLevel, setSugarLevel] = useState("Normal");
+    const [iceLevel, setIceLevel] = useState("Normal");
+    const [isReviewOpen, setIsReviewOpen] = useState(false);
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewText, setReviewText] = useState("");
+    const [hoveredStar, setHoveredStar] = useState(0);
+    const [reviews, setReviews] = useState([
+        { id: 1, name: "Alya R.", rating: 5, comment: "Jus-nya segar banget! Rekomendasi dari AI-nya tepat sekali, cocok sama kondisi saya hari itu. Bakal balik lagi!", orderType: "Dine-in", time: "2 jam lalu" },
+        { id: 2, name: "Dimas P.", rating: 5, comment: "Konsep JuiceVibe ini keren banget. AI consultant-nya benar-benar ngerti kebutuhan tubuh saya. Green Spinach-nya top!", orderType: "Takeaway", time: "5 jam lalu" },
+        { id: 3, name: "Sari M.", rating: 4, comment: "Crimson Comfort-nya recommended banget buat yang lagi PMS. Rasanya enak dan efeknya kerasa. Terima kasih JuiceVibe!", orderType: "Dine-in", time: "1 hari lalu" },
+    ]);
+
+    const showToast = (message) => {
+        setToastMessage(message);
+        setTimeout(() => setToastMessage(null), 3000);
+    };
 
     // ============ MOCK DATA ============
     const moodOptions = [
@@ -42,6 +75,7 @@ export default function VibeJuice() {
         { emoji: "🥱", label: "Kurang Tidur", mood: "tired" },
         { emoji: "😡", label: "Bad Mood", mood: "badmood" },
         { emoji: "🏃", label: "Butuh Energi", mood: "energy" },
+        { emoji: "🌸", label: "Nyeri Haid", mood: "pms" },
     ];
 
     const comboMenu = [
@@ -218,6 +252,40 @@ export default function VibeJuice() {
             price: 29000,
             icon: Heart,
             color: "bg-purple-50 border-purple-200 text-purple-700"
+        },
+        // 6. Women's Care & Comfort
+        {
+            id: 16,
+            name: "Crimson Comfort",
+            category: "Women Care",
+            moodTag: "Nyeri Haid",
+            ingredients: "Kunyit Asam, Jahe Merah, Gula Aren, Madu",
+            benefits: "Anti-inflamasi kuat dari kunyit dan efek relaksasi dari jahe terbukti secara klinis meredakan kram perut (dismenore) dan menenangkan otot rahim.",
+            price: 27000,
+            icon: Heart,
+            color: "bg-rose-50 border-rose-200 text-rose-700"
+        },
+        {
+            id: 17,
+            name: "Iron Bloom Shield",
+            category: "Women Care",
+            moodTag: "Nyeri Haid",
+            ingredients: "Buah Bit, Bayam Merah, Jeruk Sunkist, Apel Merah",
+            benefits: "Kaya zat besi dan vitamin C untuk mengganti sel darah merah yang hilang saat menstruasi, mencegah anemia dan rasa lemas berlebihan.",
+            price: 29000,
+            icon: Sparkles,
+            color: "bg-red-50 border-red-200 text-red-700"
+        },
+        {
+            id: 18,
+            name: "Golden Moon Soothe",
+            category: "Women Care",
+            moodTag: "Nyeri Haid",
+            ingredients: "Nanas, Pepaya, Jahe Merah, Air Kelapa",
+            benefits: "Enzim bromelain dari nanas efektif merelaksasi ketegangan otot rahim, sementara air kelapa mengembalikan cairan tubuh yang hilang selama siklus.",
+            price: 28000,
+            icon: Moon,
+            color: "bg-amber-50 border-amber-200 text-amber-700"
         }
     ];
 
@@ -236,7 +304,16 @@ export default function VibeJuice() {
         { id: 112, name: "Pure Orange", image: "/images/orange.png", price: 30000, unit: "per cup", origin: "Impor", benefits: ["Suntikan energi instan", "Kolagen alami kulit", "Boost sistem imun"] },
         { id: 113, name: "Mango Delight", image: "/images/mango.png", price: 28000, unit: "per cup", origin: "Lokal", benefits: ["Meningkatkan mood", "Melancarkan pencernaan", "Vitamin A tinggi"] },
         { id: 114, name: "Avocado Smooth", image: "/images/avocado.png", price: 35000, unit: "per cup", origin: "Premium", benefits: ["Lemak baik (HDL)", "Mengenyangkan lebih lama", "Nutrisi otak optimal"] },
-        { id: 115, name: "Tomato Antioxidant", image: "/images/tomato.png", price: 25000, unit: "per cup", origin: "Organik", benefits: ["Antioksidan kuat", "Melindungi kulit dari UV", "Mendukung kesehatan jantung"] }
+        { id: 115, name: "Tomato Antioxidant", image: "/images/tomato.png", price: 25000, unit: "per cup", origin: "Organik", benefits: ["Antioksidan kuat", "Melindungi kulit dari UV", "Mendukung kesehatan jantung"] },
+        { id: 116, name: "Melon Refresh", image: "/images/melon.png", price: 26000, unit: "per cup", origin: "Lokal", benefits: ["Kaya hidrasi", "Mendinginkan tubuh", "Baik untuk mata"] },
+        { id: 117, name: "Red Dragon Fruit", image: "/images/dragonfruit.png", price: 30000, unit: "per cup", origin: "Organik", benefits: ["Tinggi antioksidan", "Melancarkan pencernaan", "Meningkatkan daya tahan"] },
+        { id: 118, name: "Pink Guava", image: "/images/guava.png", price: 25000, unit: "per cup", origin: "Lokal", benefits: ["Vitamin C ekstra", "Meningkatkan trombosit", "Mencegah sembelit"] },
+        { id: 119, name: "Kiwi Green", image: "/images/kiwi.png", price: 35000, unit: "per cup", origin: "Impor", benefits: ["Meningkatkan kualitas tidur", "Kaya vitamin E", "Memperkuat imun"] },
+        { id: 120, name: "Sweet Pear", image: "/images/pear.png", price: 28000, unit: "per cup", origin: "Impor", benefits: ["Meredakan panas dalam", "Tinggi serat", "Pereda batuk alami"] },
+        { id: 121, name: "Pomegranate Red", image: "/images/pomegranate.png", price: 38000, unit: "per cup", origin: "Impor", benefits: ["Kaya polifenol", "Mencegah peradangan", "Menjaga daya ingat"] },
+        { id: 122, name: "Fresh Soursop", image: "/images/soursop.png", price: 26000, unit: "per cup", origin: "Lokal", benefits: ["Anti-kanker alami", "Meredakan asam urat", "Meningkatkan energi"] },
+        { id: 123, name: "Green Kale Detox", image: "/images/kale.png", price: 32000, unit: "per cup", origin: "Organik", benefits: ["Raja superfood", "Detoksifikasi kuat", "Tinggi vitamin K"] },
+        { id: 124, name: "Sweet Starfruit", image: "/images/starfruit.png", price: 24000, unit: "per cup", origin: "Lokal", benefits: ["Menurunkan darah tinggi", "Rendah kalori", "Meredakan nyeri sendi"] }
     ];
 
     // ============ FUNCTIONS ============
@@ -262,7 +339,7 @@ export default function VibeJuice() {
             const data = await res.json();
 
             if (!res.ok) {
-                alert(data.error || "Gagal menghubungi AI Server");
+                showToast("❌ " + (data.error || "Gagal menghubungi AI Server"));
                 return;
             }
 
@@ -270,21 +347,37 @@ export default function VibeJuice() {
             setSelectedMood(null);
         } catch (error) {
             console.error("Client Error:", error);
-            alert("Terjadi kesalahan jaringan saat memanggil Gemini API.");
+            showToast("❌ Terjadi kesalahan jaringan saat memanggil Gemini API.");
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleAddToCart = (item) => {
+        setItemToCustomize(item);
+        setSugarLevel("Normal");
+        setIceLevel("Normal");
+    };
+
+    const handleConfirmAddToCart = () => {
+        if (!itemToCustomize) return;
+        const customizedId = `${itemToCustomize.id}-${sugarLevel}-${iceLevel}`;
+
         setCartItems((prevItems) => {
-            const existingItem = prevItems.find(i => i.id === item.id);
+            const existingItem = prevItems.find(i => i.id === customizedId);
             if (existingItem) {
-                return prevItems.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+                return prevItems.map(i => i.id === customizedId ? { ...i, quantity: i.quantity + 1 } : i);
             }
-            return [...prevItems, { ...item, quantity: 1 }];
+            return [...prevItems, {
+                ...itemToCustomize,
+                id: customizedId,
+                quantity: 1,
+                sugarLevel,
+                iceLevel
+            }];
         });
-        setIsCartOpen(true);
+        showToast(`✨ ${itemToCustomize.name} ditambahkan ke keranjang!`);
+        setItemToCustomize(null);
     };
 
     const handleAddRecommendedToCart = () => {
@@ -311,6 +404,46 @@ export default function VibeJuice() {
         setCartItems((prevItems) => prevItems.filter(item => item.id !== id));
     };
 
+    const handleCheckout = () => {
+        if (!customerName.trim()) {
+            showToast("⚠️ Silakan isi Nama Pemesan terlebih dahulu!");
+            return;
+        }
+        if (orderType === "Dine-in" && !tableNumber.trim()) {
+            showToast("⚠️ Silakan isi Nomor Meja untuk pesanan Dine-in!");
+            return;
+        }
+        setIsCartOpen(false);
+        setIsPaymentSelectionOpen(true);
+    };
+
+    const handleSelectPayment = (method) => {
+        setIsPaymentSelectionOpen(false);
+        if (method === 'qris') {
+            setIsQrisOpen(true);
+        } else if (method === 'transfer') {
+            setIsTransferOpen(true);
+            setSelectedBank(null);
+        } else {
+            setIsCheckingOut(true);
+            setTimeout(() => {
+                setIsCheckingOut(false);
+                setCheckoutSuccess(true);
+                setCartItems([]);
+            }, 1500);
+        }
+    };
+
+    const handleConfirmQris = () => {
+        setIsCheckingOut(true);
+        setTimeout(() => {
+            setIsCheckingOut(false);
+            setIsQrisOpen(false);
+            setCheckoutSuccess(true);
+            setCartItems([]);
+        }, 1500);
+    };
+
     const totalCartItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
     const totalCartPrice = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
@@ -326,13 +459,16 @@ export default function VibeJuice() {
             <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-emerald-100/50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
                     {/* Left: Brand */}
-                    <div className="flex items-baseline gap-2">
-                        <h1 className="text-3xl font-bold text-emerald-700 tracking-tight">
-                            JuiceVibe
-                        </h1>
-                        <p className="text-sm text-emerald-600/70 font-light">
-                            AI-Powered Wellness Juice Bar
-                        </p>
+                    <div className="flex items-center gap-3">
+                        <img src="/images/logo.png" alt="JuiceVibe Logo" className="w-10 h-10 rounded-lg object-cover" />
+                        <div className="flex flex-col">
+                            <h1 className="text-2xl md:text-3xl font-bold text-emerald-700 tracking-tight" style={{ fontFamily: 'var(--font-playfair), serif' }}>
+                                Juice<span className="text-orange-500">Vibe</span>
+                            </h1>
+                            <p className="text-[10px] md:text-xs text-emerald-600/70 font-light tracking-widest uppercase -mt-0.5">
+                                AI-Powered Wellness Juice Bar
+                            </p>
+                        </div>
                     </div>
 
                     {/* Center: Navigation */}
@@ -352,7 +488,7 @@ export default function VibeJuice() {
                                 {totalCartItems}
                             </span>
                         </div>
-                        <div 
+                        <div
                             onClick={() => {
                                 const newName = window.prompt("Simulasi Login: Siapa nama Anda?", userName);
                                 if (newName && newName.trim() !== "") {
@@ -385,7 +521,7 @@ export default function VibeJuice() {
                         Nutrisi Cerdas Sesuai <span className="text-orange-400">Mood Anda</span>.
                     </h2>
                     <p className="text-lg md:text-xl text-emerald-100/90 leading-relaxed mb-10 font-light">
-                        JuiceVibe bukan sekadar toko jus biasa. Kami menggunakan teknologi AI terdepan untuk menganalisis kondisi fisik dan psikologis Anda hari ini, lalu meracik kombinasi jus segar yang paling tepat untuk mengembalikan energi, fokus, dan mood Anda.
+                        JuiceVibe bukan sekadar toko jus pada umumnya. Kami menggunakan teknologi AI terdepan untuk menganalisis kondisi fisik dan psikologis Anda hari ini, lalu meracik kombinasi jus segar yang paling tepat untuk mengembalikan energi, fokus, dan mood Anda.
                     </p>
                     <div className="flex flex-wrap items-center justify-center gap-4">
                         <div className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 transition-colors cursor-pointer rounded-xl backdrop-blur-sm border border-white/5">
@@ -403,6 +539,57 @@ export default function VibeJuice() {
                     </div>
                 </div>
             </section>
+
+            {/* ========== OUR VALUES SECTION ========== */}
+            <section id="about" className="max-w-7xl mx-auto px-6 py-14">
+                <div className="text-center mb-10">
+                    <span className="px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-widest mb-4 inline-block border border-emerald-200">
+                        Nilai Kami
+                    </span>
+                    <h2 className="text-3xl md:text-4xl font-bold text-slate-800 tracking-tight">
+                        Mengapa Memilih <span className="text-emerald-600">JuiceVibe</span>?
+                    </h2>
+                    <p className="text-slate-500 mt-3 max-w-xl mx-auto text-sm leading-relaxed">
+                        Lebih dari sekadar kedai jus — kami adalah mitra kesehatan Anda sehari-hari yang didukung oleh alam dan teknologi.
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Value 1 */}
+                    <div className="group bg-white rounded-2xl p-7 border border-emerald-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                        <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-emerald-500 transition-colors duration-300">
+                            <Leaf className="w-7 h-7 text-emerald-600 group-hover:text-white transition-colors duration-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">100% Bahan Segar</h3>
+                        <p className="text-sm text-slate-500 leading-relaxed">
+                            Setiap jus dibuat dari bahan-bahan segar pilihan yang dipetik langsung dari petani lokal terpercaya setiap pagi, tanpa bahan pengawet atau pewarna buatan.
+                        </p>
+                    </div>
+
+                    {/* Value 2 */}
+                    <div className="group bg-white rounded-2xl p-7 border border-orange-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                        <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-orange-500 transition-colors duration-300">
+                            <Sparkles className="w-7 h-7 text-orange-500 group-hover:text-white transition-colors duration-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">AI-Powered Recommendation</h3>
+                        <p className="text-sm text-slate-500 leading-relaxed">
+                            Didukung oleh teknologi Google Gemini AI, sistem kami menganalisis kondisi fisik dan psikologis Anda untuk meracik kombinasi jus yang paling tepat dan personal.
+                        </p>
+                    </div>
+
+                    {/* Value 3 */}
+                    <div className="group bg-white rounded-2xl p-7 border border-teal-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                        <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-teal-500 transition-colors duration-300">
+                            <Shield className="w-7 h-7 text-teal-600 group-hover:text-white transition-colors duration-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">Zero Waste & Ramah Lingkungan</h3>
+                        <p className="text-sm text-slate-500 leading-relaxed">
+                            Kami berkomitmen terhadap lingkungan dengan menggunakan kemasan biodegradable, mendaur ulang sisa buah menjadi kompos, dan mengurangi jejak karbon di setiap proses.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
 
             {/* ========== MAIN WORKSPACE ========== */}
             <main id="ai-station" className="max-w-7xl mx-auto px-6 py-12 flex flex-col gap-12">
@@ -545,7 +732,7 @@ export default function VibeJuice() {
 
                     {/* Category Tabs */}
                     <div className="flex gap-2 flex-wrap pb-2 border-b border-emerald-100/40">
-                        {["All", "Anti-Stress", "Energy", "Immunity", "Glowing"].map(
+                        {["All", "Anti-Stress", "Energy", "Immunity", "Glowing", "Women Care"].map(
                             (category) => (
                                 <button
                                     key={category}
@@ -595,7 +782,7 @@ export default function VibeJuice() {
                                         <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-emerald-50">
                                             <p className="font-semibold text-emerald-700 mb-1">Bahan Utama:</p>
                                             <p className="leading-relaxed">{combo.ingredients}</p>
-                                            
+
                                             {/* Expandable Benefits */}
                                             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedItem === combo.id ? 'max-h-40 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
                                                 <p className="font-semibold text-emerald-700 mb-1">Khasiat:</p>
@@ -695,6 +882,43 @@ export default function VibeJuice() {
                 </section>
             </main>
 
+            {/* ========== TESTIMONIALS SECTION ========== */}
+            <section className="bg-gradient-to-br from-emerald-50 to-slate-50 py-14">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-10">
+                        <span className="px-4 py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-widest mb-4 inline-block border border-amber-200">
+                            ⭐ Ulasan Pelanggan
+                        </span>
+                        <h2 className="text-3xl md:text-4xl font-bold text-slate-800 tracking-tight">
+                            Kata Mereka tentang <span className="text-emerald-600">JuiceVibe</span>
+                        </h2>
+                        <p className="text-slate-500 mt-3 text-sm">Bergabunglah dengan ribuan pelanggan yang telah merasakan manfaatnya.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        {reviews.map((review) => (
+                            <div key={review.id} className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                        {review.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-800 text-sm">{review.name}</p>
+                                        <p className="text-xs text-slate-400">{review.orderType} · {review.time}</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-0.5">
+                                    {[1, 2, 3, 4, 5].map(star => (
+                                        <span key={star} className={`text-lg ${review.rating >= star ? "text-amber-400" : "text-slate-200"}`}>★</span>
+                                    ))}
+                                </div>
+                                <p className="text-sm text-slate-600 leading-relaxed">"{review.comment}"</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
             {/* ========== CONTACT & LOCATION SECTION ========== */}
             <section id="contact" className="max-w-7xl mx-auto px-6 py-12 border-t border-emerald-100/60 mt-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center bg-emerald-50/50 rounded-3xl p-8 md:p-12 border border-emerald-100/60 shadow-sm">
@@ -704,7 +928,7 @@ export default function VibeJuice() {
                             <h2 className="text-3xl font-extrabold text-emerald-800 tracking-tight mb-3">Kunjungi JuiceVibe</h2>
                             <p className="text-emerald-600/80 leading-relaxed max-w-md">Rasakan kesegaran jus cold-pressed terbaik yang diracik langsung di depan mata Anda. Konsultasikan mood Anda langsung bersama barista AI kami di lokasi.</p>
                         </div>
-                        
+
                         <div className="space-y-5">
                             <div className="flex items-start gap-4">
                                 <div className="p-3 bg-white rounded-xl shadow-sm border border-emerald-100/50 text-emerald-600">
@@ -712,27 +936,27 @@ export default function VibeJuice() {
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-slate-700 mb-1">Lokasi Kami</h4>
-                                    <p className="text-sm text-slate-500">Jl. Wellness Center No. 88, Senopati<br/>Jakarta Selatan, 12190</p>
+                                    <p className="text-sm text-slate-500">Jl. Wellness Center No. 88, Senopati<br />Jakarta Selatan, 12190</p>
                                 </div>
                             </div>
-                            
+
                             <div className="flex items-start gap-4">
                                 <div className="p-3 bg-white rounded-xl shadow-sm border border-emerald-100/50 text-emerald-600">
                                     <Clock className="w-5 h-5" />
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-slate-700 mb-1">Jam Operasional</h4>
-                                    <p className="text-sm text-slate-500">Senin - Jumat: 07:00 - 21:00<br/>Sabtu - Minggu: 06:00 - 22:00</p>
+                                    <p className="text-sm text-slate-500">Senin - Jumat: 07:00 - 21:00<br />Sabtu - Minggu: 06:00 - 22:00</p>
                                 </div>
                             </div>
-                            
+
                             <div className="flex items-start gap-4">
                                 <div className="p-3 bg-white rounded-xl shadow-sm border border-emerald-100/50 text-emerald-600">
                                     <Phone className="w-5 h-5" />
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-slate-700 mb-1">Hubungi Kami</h4>
-                                    <p className="text-sm text-slate-500">+62 811-2345-6789<br/>hello@juicevibe.id</p>
+                                    <p className="text-sm text-slate-500">+62 811-2345-6789<br />hello@juicevibe.id</p>
                                 </div>
                             </div>
                         </div>
@@ -792,6 +1016,11 @@ export default function VibeJuice() {
                                 <div key={item.id} className="flex gap-4 p-4 bg-slate-50 rounded-2xl border border-emerald-100/50">
                                     <div className="flex-1">
                                         <h4 className="font-bold text-emerald-800 mb-1">{item.name}</h4>
+                                        {(item.sugarLevel || item.iceLevel) && (
+                                            <p className="text-xs text-slate-500 mb-1 font-medium bg-emerald-100/50 inline-block px-2 py-0.5 rounded-md border border-emerald-200">
+                                                Sugar: {item.sugarLevel} | Ice: {item.iceLevel}
+                                            </p>
+                                        )}
                                         <p className="text-emerald-600 font-semibold text-sm mb-3">Rp {item.price.toLocaleString("id-ID")}</p>
                                         <div className="flex items-center gap-3">
                                             <div className="flex items-center bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm">
@@ -815,17 +1044,383 @@ export default function VibeJuice() {
 
                     {cartItems.length > 0 && (
                         <div className="p-6 border-t border-emerald-100 bg-emerald-50/30">
+
+                            {/* Order Details Form */}
+                            <div className="mb-6 space-y-4 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
+                                <div>
+                                    <label className="block text-xs font-bold text-emerald-800 mb-1.5 uppercase tracking-wide">Nama Pemesan</label>
+                                    <input
+                                        type="text"
+                                        value={customerName}
+                                        onChange={(e) => setCustomerName(e.target.value)}
+                                        placeholder="Ketik nama Anda..."
+                                        className="w-full p-2.5 rounded-lg border border-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50/30 text-sm"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-emerald-800 mb-1.5 uppercase tracking-wide">Tipe Pesanan</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => setOrderType("Dine-in")}
+                                            className={`py-2 rounded-lg border text-sm font-bold transition-all ${orderType === "Dine-in" ? "bg-emerald-600 text-white border-emerald-600 shadow-md" : "bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-50"}`}
+                                        >
+                                            Dine-in
+                                        </button>
+                                        <button
+                                            onClick={() => setOrderType("Takeaway")}
+                                            className={`py-2 rounded-lg border text-sm font-bold transition-all ${orderType === "Takeaway" ? "bg-emerald-600 text-white border-emerald-600 shadow-md" : "bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-50"}`}
+                                        >
+                                            Takeaway
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {orderType === "Dine-in" && (
+                                    <div className="animate-in slide-in-from-top-2 duration-300">
+                                        <label className="block text-xs font-bold text-emerald-800 mb-1.5 uppercase tracking-wide">Nomor Meja</label>
+                                        <input
+                                            type="text"
+                                            value={tableNumber}
+                                            onChange={(e) => setTableNumber(e.target.value)}
+                                            placeholder="Contoh: 12"
+                                            className="w-full p-2.5 rounded-lg border border-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50/30 text-sm"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="flex items-center justify-between mb-4">
                                 <span className="font-semibold text-slate-600">Total Pembayaran</span>
                                 <span className="text-xl font-bold text-emerald-800">Rp {totalCartPrice.toLocaleString("id-ID")}</span>
                             </div>
-                            <button className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
+                            <button
+                                onClick={handleCheckout}
+                                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                            >
                                 Lanjutkan Pembayaran
                             </button>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* ========== PAYMENT SELECTION MODAL ========== */}
+            <div className={`fixed inset-0 z-[105] flex items-center justify-center transition-opacity duration-300 ${isPaymentSelectionOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsPaymentSelectionOpen(false)}></div>
+                <div className={`bg-white rounded-3xl p-6 md:p-8 max-w-md w-full mx-4 relative z-10 shadow-2xl transition-transform duration-300 transform flex flex-col ${isPaymentSelectionOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-emerald-800">Metode Pembayaran</h3>
+                        <button onClick={() => setIsPaymentSelectionOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="space-y-3">
+                        <button onClick={() => handleSelectPayment('qris')} className="w-full flex items-center justify-between p-4 border border-emerald-200 rounded-xl hover:bg-emerald-50 hover:border-emerald-400 transition-all group">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg group-hover:scale-110 transition-transform">
+                                    <QrCode className="w-6 h-6" />
+                                </div>
+                                <div className="text-left">
+                                    <h4 className="font-bold text-slate-700">QRIS</h4>
+                                    <p className="text-xs text-slate-500">Gopay, OVO, Dana, LinkAja</p>
+                                </div>
+                            </div>
+                            <span className="text-emerald-600 font-bold">Pilih</span>
+                        </button>
+
+                        <button onClick={() => handleSelectPayment('transfer')} className="w-full flex items-center justify-between p-4 border border-emerald-200 rounded-xl hover:bg-emerald-50 hover:border-emerald-400 transition-all group">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
+                                    <CreditCard className="w-6 h-6" />
+                                </div>
+                                <div className="text-left">
+                                    <h4 className="font-bold text-slate-700">Transfer Bank</h4>
+                                    <p className="text-xs text-slate-500">BCA, Mandiri, BNI, BRI</p>
+                                </div>
+                            </div>
+                            <span className="text-emerald-600 font-bold">Pilih</span>
+                        </button>
+
+                        <button onClick={() => handleSelectPayment('cash')} className="w-full flex items-center justify-between p-4 border border-emerald-200 rounded-xl hover:bg-emerald-50 hover:border-emerald-400 transition-all group">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-orange-100 text-orange-600 rounded-lg group-hover:scale-110 transition-transform">
+                                    <Wallet className="w-6 h-6" />
+                                </div>
+                                <div className="text-left">
+                                    <h4 className="font-bold text-slate-700">Bayar di Kasir</h4>
+                                    <p className="text-xs text-slate-500">Tunai atau Kartu Debit/Kredit</p>
+                                </div>
+                            </div>
+                            <span className="text-emerald-600 font-bold">Pilih</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* ========== QRIS DUMMY MODAL ========== */}
+            <div className={`fixed inset-0 z-[110] flex items-center justify-center transition-opacity duration-300 ${isQrisOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !isCheckingOut && setIsQrisOpen(false)}></div>
+                <div className={`bg-white rounded-3xl p-8 max-w-sm w-full mx-4 relative z-10 shadow-2xl transition-transform duration-300 transform flex flex-col items-center text-center ${isQrisOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}>
+                    <h3 className="text-2xl font-bold text-emerald-800 mb-1">Scan QRIS</h3>
+                    <p className="text-slate-500 mb-6 text-sm">Scan menggunakan aplikasi e-wallet Anda.</p>
+
+                    <div className="bg-white p-2 rounded-2xl border-4 border-emerald-800 shadow-sm mb-6 relative">
+                        {/* A dummy QR Code using an open API */}
+                        <img
+                            src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=JuiceVibeHackathonProject"
+                            alt="Dummy QR Code"
+                            className="w-48 h-48 rounded-lg"
+                        />
+                    </div>
+
+                    <div className="bg-emerald-50 text-emerald-800 w-full p-4 rounded-xl mb-6">
+                        <p className="text-xs font-semibold uppercase tracking-wide mb-1">Total Tagihan</p>
+                        <p className="text-xl font-bold">Rp {totalCartPrice.toLocaleString("id-ID")}</p>
+                    </div>
+
+                    <button
+                        onClick={handleConfirmQris}
+                        disabled={isCheckingOut}
+                        className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                        {isCheckingOut ? (
+                            <><Loader2 className="w-5 h-5 animate-spin" /> Memverifikasi...</>
+                        ) : (
+                            "Saya Sudah Bayar"
+                        )}
+                    </button>
+
+                    <button
+                        onClick={() => setIsQrisOpen(false)}
+                        disabled={isCheckingOut}
+                        className="mt-4 text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors disabled:opacity-50"
+                    >
+                        Batalkan
+                    </button>
+                </div>
+            </div>
+
+            {/* ========== TRANSFER BANK MODAL ========== */}
+            <div className={`fixed inset-0 z-[110] flex items-center justify-center transition-opacity duration-300 ${isTransferOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !isCheckingOut && setIsTransferOpen(false)}></div>
+                <div className={`bg-white rounded-3xl p-8 max-w-sm w-full mx-4 relative z-10 shadow-2xl transition-transform duration-300 transform flex flex-col ${isTransferOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}>
+                    <h3 className="text-2xl font-bold text-emerald-800 mb-1 text-center">Transfer Bank</h3>
+
+                    {!selectedBank ? (
+                        <>
+                            <p className="text-slate-500 mb-6 text-sm text-center">Pilih bank tujuan transfer Anda.</p>
+                            <div className="space-y-3 mb-6">
+                                {['BCA', 'Mandiri', 'BNI', 'BRI'].map((bank) => (
+                                    <button
+                                        key={bank}
+                                        onClick={() => setSelectedBank(bank)}
+                                        className="w-full flex items-center justify-between p-4 border border-emerald-200 rounded-xl hover:bg-emerald-50 hover:border-emerald-400 transition-all font-bold text-slate-700"
+                                    >
+                                        {bank} Virtual Account
+                                        <ChevronRight className="w-5 h-5 text-emerald-500" />
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                onClick={() => setIsTransferOpen(false)}
+                                className="w-full mt-2 text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors"
+                            >
+                                Batalkan
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-slate-500 mb-6 text-sm text-center">Transfer sesuai nominal ke nomor Virtual Account di bawah.</p>
+
+                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 text-center">
+                                <p className="text-xs font-bold text-slate-500 mb-1">{selectedBank} Virtual Account</p>
+                                <p className="text-2xl font-mono font-bold tracking-widest text-emerald-800">8890 1234 5678</p>
+                            </div>
+
+                            <div className="bg-emerald-50 text-emerald-800 w-full p-4 rounded-xl mb-6 text-center">
+                                <p className="text-xs font-semibold uppercase tracking-wide mb-1">Total Tagihan</p>
+                                <p className="text-xl font-bold">Rp {totalCartPrice.toLocaleString("id-ID")}</p>
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    setIsCheckingOut(true);
+                                    setTimeout(() => {
+                                        setIsCheckingOut(false);
+                                        setIsTransferOpen(false);
+                                        setCheckoutSuccess(true);
+                                        setCartItems([]);
+                                    }, 1500);
+                                }}
+                                disabled={isCheckingOut}
+                                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {isCheckingOut ? (
+                                    <><Loader2 className="w-5 h-5 animate-spin" /> Memverifikasi...</>
+                                ) : (
+                                    "Saya Sudah Transfer"
+                                )}
+                            </button>
+
+                            <button
+                                onClick={() => !isCheckingOut && setSelectedBank(null)}
+                                disabled={isCheckingOut}
+                                className="mt-4 text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors text-center w-full disabled:opacity-50"
+                            >
+                                Ganti Bank
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* ========== CHECKOUT SUCCESS MODAL ========== */}
+            <div className={`fixed inset-0 z-[120] flex items-center justify-center transition-opacity duration-300 ${checkoutSuccess ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setCheckoutSuccess(false)}></div>
+                <div className={`bg-white rounded-3xl p-8 max-w-sm w-full mx-4 relative z-10 shadow-2xl transition-transform duration-300 transform flex flex-col items-center text-center ${checkoutSuccess ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}>
+                    <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-5">
+                        <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-emerald-800 mb-2">Pembayaran Berhasil!</h3>
+                    <p className="text-slate-500 mb-6 leading-relaxed text-sm">
+                        {orderType === "Dine-in"
+                            ? `Pesanan jus Anda sedang diracik oleh Barista kami dan akan segera diantarkan ke Meja ${tableNumber}. Terima kasih, Kak ${customerName || userName}!`
+                            : `Pesanan Takeaway Anda sedang diracik dan akan segera siap diambil. Terima kasih, Kak ${customerName || userName}!`}
+                    </p>
+                    <button
+                        onClick={() => {
+                            setCheckoutSuccess(false);
+                            setIsReviewOpen(true);
+                            setReviewRating(5);
+                            setReviewText("");
+                        }}
+                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors mb-3"
+                    >
+                        ⭐ Beri Ulasan
+                    </button>
+                    <button
+                        onClick={() => setCheckoutSuccess(false)}
+                        className="w-full py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium rounded-xl transition-colors text-sm"
+                    >
+                        Lewati, Kembali ke Beranda
+                    </button>
+                </div>
+            </div>
+
+            {/* ========== TOAST NOTIFICATION ========== */}
+            <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[200] transition-all duration-300 transform ${toastMessage ? "translate-y-0 opacity-100" : "-translate-y-8 opacity-0 pointer-events-none"}`}>
+                <div className="bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl font-medium text-sm flex items-center gap-2 border border-slate-700">
+                    {toastMessage}
+                </div>
+            </div>
+
+            {/* ========== CUSTOMIZATION MODAL ========== */}
+            <div className={`fixed inset-0 z-[130] flex items-center justify-center transition-opacity duration-300 ${itemToCustomize ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setItemToCustomize(null)}></div>
+                <div className={`bg-white rounded-3xl p-6 max-w-sm w-full mx-4 relative z-10 shadow-2xl transition-transform duration-300 transform flex flex-col ${itemToCustomize ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}>
+                    <h3 className="text-xl font-bold text-emerald-800 mb-1">{itemToCustomize?.name}</h3>
+                    <p className="text-slate-500 mb-6 text-sm">Sesuaikan tingkat kemanisan dan es.</p>
+
+                    <div className="space-y-4 mb-6">
+                        <div>
+                            <label className="block text-xs font-bold text-emerald-800 mb-2 uppercase tracking-wide">Tingkat Kemanisan</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {['Normal', 'Less', 'No Sugar'].map(level => (
+                                    <button
+                                        key={level}
+                                        onClick={() => setSugarLevel(level)}
+                                        className={`py-2 rounded-lg border text-xs font-bold transition-all ${sugarLevel === level ? "bg-emerald-600 text-white border-emerald-600 shadow-md" : "bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-50"}`}
+                                    >
+                                        {level}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-emerald-800 mb-2 uppercase tracking-wide">Tingkat Es</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {['Normal', 'Less', 'No Ice'].map(level => (
+                                    <button
+                                        key={level}
+                                        onClick={() => setIceLevel(level)}
+                                        className={`py-2 rounded-lg border text-xs font-bold transition-all ${iceLevel === level ? "bg-emerald-600 text-white border-emerald-600 shadow-md" : "bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-50"}`}
+                                    >
+                                        {level}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleConfirmAddToCart}
+                        className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all duration-200"
+                    >
+                        Simpan & Tambah
+                    </button>
+                </div>
+            </div>
+
+            {/* ========== REVIEW MODAL ========== */}
+            <div className={`fixed inset-0 z-[140] flex items-center justify-center transition-opacity duration-300 ${isReviewOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsReviewOpen(false)}></div>
+                <div className={`bg-white rounded-3xl p-7 max-w-sm w-full mx-4 relative z-10 shadow-2xl transition-transform duration-300 transform ${isReviewOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}>
+                    <h3 className="text-xl font-bold text-slate-800 mb-1">Bagaimana Pengalamanmu? 😊</h3>
+                    <p className="text-slate-500 text-sm mb-5">Ulasanmu sangat berarti bagi kami, Kak {customerName}!</p>
+
+                    {/* Star Rating */}
+                    <div className="flex justify-center gap-2 mb-5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                                key={star}
+                                onClick={() => setReviewRating(star)}
+                                onMouseEnter={() => setHoveredStar(star)}
+                                onMouseLeave={() => setHoveredStar(0)}
+                                className="text-4xl transition-transform hover:scale-125"
+                            >
+                                <span className={(hoveredStar || reviewRating) >= star ? "text-amber-400" : "text-slate-200"}>
+                                    ★
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                    <p className="text-center text-xs font-semibold text-amber-500 mb-5">
+                        {["Sangat Buruk", "Buruk", "Cukup", "Bagus", "Sangat Memuaskan!"][(hoveredStar || reviewRating) - 1]}
+                    </p>
+
+                    {/* Comment */}
+                    <textarea
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        placeholder="Ceritakan pengalamanmu... (opsional)"
+                        rows={3}
+                        className="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm resize-none mb-5 bg-slate-50"
+                    />
+
+                    <button
+                        onClick={() => {
+                            const newReview = {
+                                id: Date.now(),
+                                name: customerName || "Pelanggan Anonim",
+                                rating: reviewRating,
+                                comment: reviewText || "Pengalaman yang menyenangkan!",
+                                orderType: orderType,
+                                time: "Baru saja"
+                            };
+                            setReviews(prev => [newReview, ...prev]);
+                            setIsReviewOpen(false);
+                            showToast("🙏 Terima kasih atas ulasanmu!");
+                        }}
+                        className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors"
+                    >
+                        Kirim Ulasan
+                    </button>
+                </div>
+            </div>
+
         </div>
     );
 }
