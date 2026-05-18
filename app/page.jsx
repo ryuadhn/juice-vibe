@@ -1534,9 +1534,9 @@ export default function VibeJuice() {
             {/* ========== KARTU PRESKRIPSI DIGITAL MODAL ========== */}
             <div className={`fixed inset-0 z-[150] flex items-center justify-center transition-opacity duration-300 ${isPrescriptionOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsPrescriptionOpen(false)}></div>
-                <div className={`bg-white rounded-[32px] max-w-md w-full mx-4 relative z-[160] shadow-2xl transition-transform duration-300 transform overflow-hidden flex flex-col ${isPrescriptionOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}>
+                <div className={`bg-white rounded-[32px] max-w-md w-full max-h-[90vh] mx-4 relative z-[160] shadow-2xl transition-transform duration-300 transform overflow-hidden flex flex-col ${isPrescriptionOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}>
                     {/* Brand Header */}
-                    <div className="bg-emerald-800 p-6 text-center text-white relative">
+                    <div className="bg-emerald-800 p-6 text-center text-white relative flex-shrink-0">
                         <button
                             onClick={() => setIsPrescriptionOpen(false)}
                             className="absolute top-4 right-4 text-emerald-100 hover:text-white transition-colors"
@@ -1551,7 +1551,7 @@ export default function VibeJuice() {
                     </div>
 
                     {/* Prescription Details */}
-                    <div className="p-6 space-y-6 bg-slate-50/50">
+                    <div className="p-6 space-y-6 bg-slate-50/50 overflow-y-auto flex-1">
                         {/* Patient info */}
                         <div className="grid grid-cols-2 gap-4 text-xs pb-4 border-b border-dashed border-emerald-200">
                             <div>
@@ -1623,7 +1623,7 @@ export default function VibeJuice() {
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="p-6 bg-white border-t border-slate-100 flex gap-3">
+                    <div className="p-6 bg-white border-t border-slate-100 flex gap-3 flex-shrink-0">
                         <button
                             onClick={() => {
                                 showToast("Kartu preskripsi kesehatan Anda berhasil diunduh!");
