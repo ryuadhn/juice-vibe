@@ -35,6 +35,8 @@ export default function VibeJuice() {
     const [cartItems, setCartItems] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [userName, setUserName] = useState("Ryu");
+    const [isLoginOpen, setIsLoginOpen] = useState(false);
+    const [loginInput, setLoginInput] = useState("");
     const [userInput, setUserInput] = useState("");
     const [selectedMood, setSelectedMood] = useState(null);
     const [recommendation, setRecommendation] = useState(null);
@@ -490,15 +492,13 @@ export default function VibeJuice() {
                         </div>
                         <div
                             onClick={() => {
-                                const newName = window.prompt("Simulasi Login: Siapa nama Anda?", userName);
-                                if (newName && newName.trim() !== "") {
-                                    setUserName(newName);
-                                }
+                                setLoginInput(userName);
+                                setIsLoginOpen(true);
                             }}
                             className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100/40 border border-emerald-200/60 cursor-pointer hover:bg-emerald-100/80 transition-colors"
-                            title="Klik untuk mengubah profil (Simulasi)"
+                            title="Klik untuk mengubah profil"
                         >
-                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                            <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold">{userName.charAt(0).toUpperCase()}</div>
                             <span className="text-sm font-medium text-emerald-700">{userName}</span>
                         </div>
                     </div>
@@ -1417,6 +1417,50 @@ export default function VibeJuice() {
                         className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors"
                     >
                         Kirim Ulasan
+                    </button>
+                </div>
+            </div>
+
+            {/* ========== LOGIN MODAL ========== */}
+            <div className={`fixed inset-0 z-[160] flex items-center justify-center transition-opacity duration-300 ${isLoginOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsLoginOpen(false)}></div>
+                <div className={`bg-white rounded-3xl p-8 max-w-sm w-full mx-4 relative z-10 shadow-2xl transition-transform duration-300 transform ${isLoginOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}>
+                    
+                    <div className="flex flex-col items-center mb-6">
+                        <div className="w-16 h-16 rounded-full bg-emerald-600 flex items-center justify-center text-white text-2xl font-bold mb-3 shadow-lg">
+                            {loginInput.charAt(0).toUpperCase() || "?"}
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800">Siapa Nama Anda?</h3>
+                        <p className="text-slate-500 text-sm mt-1">Agar pengalaman JuiceVibe Anda lebih personal.</p>
+                    </div>
+
+                    <input
+                        type="text"
+                        value={loginInput}
+                        onChange={(e) => setLoginInput(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && loginInput.trim()) {
+                                setUserName(loginInput.trim());
+                                setIsLoginOpen(false);
+                            }
+                        }}
+                        placeholder="Ketik nama Anda..."
+                        autoFocus
+                        className="w-full p-3.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm mb-4 text-center font-semibold text-slate-700 bg-slate-50"
+                    />
+
+                    <button
+                        onClick={() => {
+                            if (loginInput.trim()) {
+                                setUserName(loginInput.trim());
+                                setIsLoginOpen(false);
+                                showToast(`👋 Selamat datang, ${loginInput.trim()}!`);
+                            }
+                        }}
+                        disabled={!loginInput.trim()}
+                        className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        Mulai Session
                     </button>
                 </div>
             </div>
