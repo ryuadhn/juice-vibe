@@ -84,6 +84,9 @@ export default function VibeJuice() {
         { date: "Hari Ini", mood: "Segar", score: 81 },
     ]);
     const [isPrescriptionOpen, setIsPrescriptionOpen] = useState(false);
+    const [aiIsTyping, setAiIsTyping] = useState(false);
+    const [lastUserMessage, setLastUserMessage] = useState("");
+    const [isCartAnimating, setIsCartAnimating] = useState(false);
 
     const moodScores = {
         "Stres Tugas": { energy: 45, calmness: 35, detox: 60 },
@@ -408,14 +411,18 @@ export default function VibeJuice() {
     const handleConsultation = async () => {
         if (!userInput.trim()) return;
 
+        const messageToSend = userInput;
+        setLastUserMessage(messageToSend);
+        setUserInput("");
         setIsLoading(true);
+        setAiIsTyping(true);
         setRecommendation(null);
 
         try {
             const res = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: userInput })
+                body: JSON.stringify({ message: messageToSend })
             });
 
             const data = await res.json();
@@ -428,13 +435,53 @@ export default function VibeJuice() {
             setRecommendation(data);
             setSelectedMood(null);
             if (data.scores) {
-                updateVibeScores(data.scores, userInput.slice(0, 15) + (userInput.length > 15 ? "..." : ""));
+                updateVibeScores(data.scores, messageToSend.slice(0, 15) + (messageToSend.length > 15 ? "..." : ""));
+            }
+
+            // Parser for [ACTION:ADD_CART:ID_JUS] or autoAddToCart from Gemini
+            let actionMatch = null;
+            const messageString = JSON.stringify(data);
+            const actionRegex = /\[ACTION:ADD_CART:(\d+)\]/;
+            const match = messageString.match(actionRegex);
+            if (match) {
+                actionMatch = parseInt(match[1], 10);
+            }
+
+            const menuIdToAdd = actionMatch || (data.autoAddToCart ? data.matchedMenuId : null);
+
+            if (menuIdToAdd) {
+                const menuItem = singleJuiceMenu.find(item => item.id === menuIdToAdd) || comboMenu.find(item => item.id === menuIdToAdd);
+                if (menuItem) {
+                    const customizedId = `${menuItem.id}-Normal-Normal`;
+                    setCartItems((prevItems) => {
+                        const existingItem = prevItems.find(i => i.id === customizedId);
+                        if (existingItem) {
+                            return prevItems.map(i => i.id === customizedId ? { ...i, quantity: i.quantity + 1 } : i);
+                        }
+                        return [...prevItems, {
+                            ...menuItem,
+                            id: customizedId,
+                            quantity: 1,
+                            sugarLevel: "Normal",
+                            iceLevel: "Normal"
+                        }];
+                    });
+
+                    // Trigger micro-interaction on cart
+                    setIsCartAnimating(true);
+                    setTimeout(() => {
+                        setIsCartAnimating(false);
+                    }, 800);
+
+                    showToast(`AI otomatis menambahkan ${menuItem.name} ke keranjang!`);
+                }
             }
         } catch (error) {
             console.error("Client Error:", error);
             showToast("Terjadi kesalahan jaringan saat memanggil Gemini API.");
         } finally {
             setIsLoading(false);
+            setAiIsTyping(false);
         }
     };
 
@@ -594,8 +641,11 @@ export default function VibeJuice() {
 
                     {/* Right: Cart & Profile */}
                     <div className="flex items-center gap-6">
-                        <div onClick={() => setIsCartOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-200/60 cursor-pointer hover:bg-orange-100 transition-colors">
-                            <ShoppingBag className="w-5 h-5 text-orange-600" />
+                        <div
+                            onClick={() => setIsCartOpen(true)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-200/60 cursor-pointer hover:bg-orange-100 transition-all ${isCartAnimating ? "animate-bounce scale-110 border-orange-500 bg-orange-100 shadow-md duration-300" : "duration-200"}`}
+                        >
+                            <ShoppingBag className={`w-5 h-5 text-orange-600 ${isCartAnimating ? "animate-pulse" : ""}`} />
                             <span className="text-sm font-semibold text-orange-700">
                                 {totalCartItems}
                             </span>
@@ -787,51 +837,107 @@ export default function VibeJuice() {
                             </button>
                         </div>
 
-                        {/* Recommendation Result */}
-                        {recommendation && (
-                            <div className="bg-gradient-to-br from-emerald-100/60 to-emerald-50/80 rounded-2xl border border-emerald-300/50 p-6 shadow-md animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                <div className="flex items-start gap-3 mb-4">
-                                    <Heart className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
-                                    <div className="flex-1">
-                                        <h3 className="text-xl font-bold text-emerald-800">
-                                            {recommendation.name}
-                                        </h3>
-                                        <p className="text-sm text-emerald-700/80 mt-1">
-                                            {recommendation.description}
-                                        </p>
-                                    </div>
-                                </div>
+                        {/* Conversation Stream */}
+                        {(lastUserMessage || aiIsTyping || recommendation) && (
+                            <div className="bg-slate-50 border border-emerald-100/60 rounded-2xl p-5 space-y-4 shadow-inner reveal">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Percakapan Konsultasi</label>
 
-                                <div className="space-y-3 mb-5 pt-4 border-t border-emerald-200/60">
-                                    <div>
-                                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                                            Khasiat:
-                                        </p>
-                                        <p className="text-sm text-slate-700 leading-relaxed">
-                                            {recommendation.benefits}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                                            Penelitian Ilmiah:
-                                        </p>
-                                        <p className="text-xs text-slate-600 italic">
-                                            "{recommendation.scientific}"
-                                        </p>
-                                    </div>
-                                </div>
+                                <div className="space-y-4">
+                                    {/* User Chat Bubble */}
+                                    {lastUserMessage && (
+                                        <div className="flex justify-end animate-in fade-in slide-in-from-right-2 duration-300">
+                                            <div className="max-w-[75%] bg-emerald-600 text-white rounded-2xl rounded-tr-none px-4 py-2.5 text-sm shadow-md">
+                                                <p className="font-semibold text-[10px] text-emerald-100 mb-0.5 uppercase tracking-wide">Anda</p>
+                                                <p className="leading-relaxed">{lastUserMessage}</p>
+                                            </div>
+                                        </div>
+                                    )}
 
-                                <div className="flex items-center justify-between pt-4 border-t border-emerald-200/60">
-                                    <span className="text-2xl font-bold text-emerald-700">
-                                        Rp {recommendation.price.toLocaleString("id-ID")}
-                                    </span>
-                                    <button
-                                        onClick={handleAddRecommendedToCart}
-                                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
-                                    >
-                                        <Plus className="w-5 h-5" />
-                                        Masukkan Keranjang
-                                    </button>
+                                    {/* Barista AI Typing Indicator */}
+                                    {aiIsTyping && (
+                                        <div className="flex justify-start animate-in fade-in slide-in-from-left-2 duration-300">
+                                            <div className="max-w-[75%] bg-emerald-50 border border-emerald-100/50 text-emerald-900 rounded-2xl rounded-tl-none px-4 py-3 text-sm shadow-sm flex items-start gap-2.5">
+                                                <div className="w-6 h-6 bg-emerald-700 text-white rounded-full flex items-center justify-center font-extrabold text-[9px] mt-0.5 flex-shrink-0 animate-pulse">
+                                                    AI
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-emerald-800 text-[10px] uppercase tracking-wide mb-1">Barista JuiceVibe</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-medium text-emerald-700/80">JuiceVibe AI sedang meracik menu...</span>
+                                                        <div className="flex gap-1">
+                                                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                                                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Barista AI Recommendation Result */}
+                                    {recommendation && !aiIsTyping && (
+                                        <div className="flex justify-start animate-in fade-in slide-in-from-left-2 duration-300">
+                                            <div className="w-full bg-gradient-to-br from-emerald-100/70 to-emerald-50/90 rounded-2xl border border-emerald-300/40 p-5 shadow-md">
+                                                <div className="flex items-start gap-3 mb-4">
+                                                    <div className="w-7 h-7 bg-emerald-700 text-white rounded-full flex items-center justify-center font-extrabold text-xs flex-shrink-0 mt-0.5 shadow-sm">
+                                                        AI
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h3 className="text-lg font-extrabold text-emerald-800">
+                                                            {recommendation.name}
+                                                        </h3>
+                                                        <p className="text-xs text-emerald-700/90 font-medium mt-0.5 leading-relaxed bg-emerald-100/40 px-2.5 py-1.5 rounded-lg border border-emerald-200/30">
+                                                            {recommendation.autoAddMessage || recommendation.description}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-3 mb-5 pt-3 border-t border-emerald-200/50">
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">
+                                                            Khasiat & Kandungan:
+                                                        </p>
+                                                        <p className="text-xs text-slate-700 leading-relaxed">
+                                                            {recommendation.benefits}
+                                                        </p>
+                                                    </div>
+                                                    {recommendation.scientific && (
+                                                        <div>
+                                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">
+                                                                Penjelasan Ilmiah:
+                                                            </p>
+                                                            <p className="text-[11px] text-slate-600 italic leading-relaxed">
+                                                                "{recommendation.scientific}"
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex items-center justify-between pt-3 border-t border-emerald-200/50">
+                                                    <div>
+                                                        <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Harga Menu</span>
+                                                        <span className="text-xl font-extrabold text-emerald-700">
+                                                            Rp {recommendation.price.toLocaleString("id-ID")}
+                                                        </span>
+                                                    </div>
+                                                    {recommendation.price > 0 ? (
+                                                        <button
+                                                            onClick={handleAddRecommendedToCart}
+                                                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 text-xs"
+                                                        >
+                                                            <Plus className="w-4 h-4" />
+                                                            Masukkan Keranjang
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-xs font-bold text-slate-500 italic bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                                                            Saran Selesai
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}

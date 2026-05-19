@@ -70,7 +70,21 @@ Aturan matchedMenuId harus ID dari menu di atas.
 Aturan Penaksiran Skor Kesehatan:
 - energy: tingkat kesegaran/stamina fisik (skor rendah 30-60 jika mereka mengeluh capek, begadang, lemas; skor tinggi 70-100 jika fit).
 - calmness: tingkat kedamaian pikiran/mental (skor rendah jika stres, cemas, pusing, marah; tinggi jika tenang).
-- detox: tingkat kebersihan organ/pencernaan (skor rendah jika sembelit, jerawatan, panas dalam, terlalu banyak junk food).`;
+- detox: tingkat kebersihan organ/pencernaan (skor rendah jika sembelit, jerawatan, panas dalam, terlalu banyak junk food).
+
+Aturan Proteksi Input Acak/Tidak Relevan:
+Jika input atau curhatan pengguna sama sekali tidak relevan dengan tema kesehatan, kondisi fisik, masalah psikologis/mood, atau pemesanan jus (misalnya user hanya mengetik teks acak seperti 'asdasd', 'wkwkwk', atau tes yang tidak jelas), jangan bingung dan jangan berikan rekomendasi jus asal-asalan. Jawablah dengan kepribadian barista JuiceVibe yang ramah dan jenaka, lalu arahkan mereka kembali secara halus untuk berkonsultasi seputar kondisi tubuh atau mood harian mereka agar kamu bisa memilihkan menu yang tepat. Dalam kasus ini, gunakan format JSON berikut:
+{
+  "name": "Sapaan Barista AI",
+  "description": "Tidak ada produk yang direkomendasikan.",
+  "benefits": "Kami siap membantu jika Anda ingin berkonsultasi seputar kesehatan atau mood Anda.",
+  "price": 0,
+  "scientific": "Tertawa dan obrolan santai adalah langkah awal menuju kebugaran!",
+  "autoAddToCart": false,
+  "matchedMenuId": null,
+  "autoAddMessage": "[Isi dengan jawaban ramah, jenaka, dan mengarahkan kembali ke konsultasi kesehatan/mood]",
+  "scores": null
+}`;
 
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
