@@ -7,7 +7,7 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }} # GCP Project ID
-  SERVICE_NAME: vibejuice                  # Cloud Run Service Name
+  SERVICE_NAME: juicevibe                  # Cloud Run Service Name
   REGION: asia-southeast2                  # Cloud Run Region (e.g., asia-southeast2 is Jakarta)
 
 jobs:
@@ -29,12 +29,12 @@ jobs:
 
       - name: Build and Push Container using Cloud Build
         run: |
-          gcloud builds submit --tag asia-southeast2-docker.pkg.dev/${{ env.PROJECT_ID }}/vibejuice/app:${{ github.sha }} .
+          gcloud builds submit --tag asia-southeast2-docker.pkg.dev/${{ env.PROJECT_ID }}/juicevibe/app:${{ github.sha }} .
 
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ env.SERVICE_NAME }}
-          image: asia-southeast2-docker.pkg.dev/${{ env.PROJECT_ID }}/vibejuice/app:${{ github.sha }}
+          image: asia-southeast2-docker.pkg.dev/${{ env.PROJECT_ID }}/juicevibe/app:${{ github.sha }}
           region: ${{ env.REGION }}
           flags: '--allow-unauthenticated --port=3000 --set-env-vars=NODE_ENV=production'
