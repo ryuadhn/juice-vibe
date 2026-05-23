@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+.git
+.env*.local
+.eslintrc.json
+architecture_analysis.md
+code_explanation.md
+walkthrough.md
+task.md
+implementation_plan.md

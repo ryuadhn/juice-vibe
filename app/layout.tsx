@@ -5,7 +5,7 @@ const outfit = Outfit({ subsets: ['latin'] });
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
 
 export const metadata = {
-    title: "VibeJuice",
+    title: "JuiceVibe",
     description: "AI-Powered Wellness Juice Bar",
 };
 
