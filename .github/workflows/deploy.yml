@@ -1,0 +1,40 @@
+name: Deploy to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }} # GCP Project ID
+  SERVICE_NAME: vibejuice                  # Cloud Run Service Name
+  REGION: asia-southeast2                  # Cloud Run Region (e.g., asia-southeast2 is Jakarta)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }} # GCP Service Account JSON Key
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and Push Container using Cloud Build
+        run: |
+          gcloud builds submit --tag asia-southeast2-docker.pkg.dev/${{ env.PROJECT_ID }}/vibejuice/app:${{ github.sha }} .
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          image: asia-southeast2-docker.pkg.dev/${{ env.PROJECT_ID }}/vibejuice/app:${{ github.sha }}
+          region: ${{ env.REGION }}
+          flags: '--allow-unauthenticated --port=3000 --set-env-vars=NODE_ENV=production'
